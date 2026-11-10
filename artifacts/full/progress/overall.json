@@ -1,0 +1,100 @@
+{
+ "started": 1794211439.7962592,
+ "finished": 1794221426.319824,
+ "current": null,
+ "status": "done",
+ "steps": {
+  "baselines": {
+   "status": "done",
+   "estimate_s": 30,
+   "start": 1794211439.7986002,
+   "end": 1794211454.6209638,
+   "tasks_total": 10,
+   "tasks_done": 10,
+   "tasks_failed": 0
+  },
+  "partA": {
+   "status": "done",
+   "estimate_s": 300,
+   "start": 1794211454.6228504,
+   "end": 1794211680.6468098,
+   "tasks_total": 40,
+   "tasks_done": 40,
+   "tasks_failed": 0
+  },
+  "missing": {
+   "status": "done",
+   "estimate_s": 150,
+   "start": 1794211680.6484857,
+   "end": 1794211787.3020613,
+   "tasks_total": 50,
+   "tasks_done": 50,
+   "tasks_failed": 0
+  },
+  "features": {
+   "status": "done",
+   "estimate_s": 200,
+   "start": 1794211787.3036096,
+   "end": 1794211816.7043664,
+   "tasks_total": 40,
+   "tasks_done": 40,
+   "tasks_failed": 0
+  },
+  "tune": {
+   "status": "done",
+   "estimate_s": 5400,
+   "start": 1794211816.7059672,
+   "end": 1794216950.349885,
+   "tasks_total": 4,
+   "tasks_done": 4,
+   "tasks_failed": 0
+  },
+  "final": {
+   "status": "done",
+   "estimate_s": 900,
+   "start": 1794216950.3516333,
+   "end": 1794218558.8896234,
+   "tasks_total": 60,
+   "tasks_done": 60,
+   "tasks_failed": 0
+  },
+  "team": {
+   "status": "done",
+   "estimate_s": 30,
+   "start": 1794218558.891538,
+   "end": 1794218567.085121,
+   "tasks_total": 0,
+   "tasks_done": 0,
+   "tasks_failed": 0
+  },
+  "holdout": {
+   "status": "done",
+   "estimate_s": 500,
+   "start": 1794218567.0866706,
+   "end": 1794219555.2796822,
+   "tasks_total": 21,
+   "tasks_done": 21,
+   "tasks_failed": 0
+  },
+  "analysis": {
+   "status": "done",
+   "estimate_s": 720,
+   "start": 1794219555.283116,
+   "end": 1794221211.6551912,
+   "tasks_total": 12,
+   "tasks_done": 12,
+   "tasks_failed": 0
+  },
+  "trust": {
+   "status": "done",
+   "estimate_s": 480,
+   "start": 1794221211.657087,
+   "end": 1794221426.3180084,
+   "tasks_total": 3,
+   "tasks_done": 3,
+   "tasks_failed": 0
+  }
+ },
+ "updated": 1794221426.3202872,
+ "eta_s": 0.0
+}

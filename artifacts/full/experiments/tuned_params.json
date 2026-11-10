@@ -1,0 +1,39 @@
+{
+  "knn": {
+    "n_neighbors": 11,
+    "weights": "uniform",
+    "p": 1,
+    "n_estimators": 19,
+    "max_samples": 0.9023061145413845,
+    "max_features": 0.9805266680327738,
+    "use_nca": true,
+    "nca_components": 12
+  },
+  "svm": {
+    "kernel": "rbf",
+    "C": 16.314423711260535,
+    "gamma": 0.028521057824166265,
+    "calibration": "isotonic",
+    "n_estimators": 11,
+    "max_samples": 12000
+  },
+  "mlp": {
+    "n_layers": 2,
+    "width": 128,
+    "shrink": false,
+    "activation": "relu",
+    "alpha": 0.005596445729945469,
+    "lr": 0.009432235608706653,
+    "batch": 128,
+    "n_members": 7
+  },
+  "xgb": {
+    "learning_rate": 0.05340524111824055,
+    "max_depth": 9,
+    "subsample": 0.8858010990786713,
+    "colsample_bytree": 0.8759479606046808,
+    "reg_lambda": 7.222110607880924,
+    "min_child_weight": 2,
+    "gamma": 0.42593129757592385
+  }
+}

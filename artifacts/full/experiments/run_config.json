@@ -1,0 +1,42 @@
+{
+  "exp": {
+    "tune_rows": 30000,
+    "n_trials": 60,
+    "inner_folds": 3,
+    "cv_folds": 5,
+    "study_rows": 30000,
+    "weight_trials": 200
+  },
+  "smoke": false,
+  "steps": [
+    "baselines",
+    "partA",
+    "missing",
+    "features",
+    "tune",
+    "final",
+    "team",
+    "holdout",
+    "analysis",
+    "trust"
+  ],
+  "pools": {
+    "cv": [
+      8,
+      2
+    ],
+    "tune": [
+      4,
+      4
+    ],
+    "fit": [
+      8,
+      2
+    ],
+    "analysis": [
+      4,
+      4
+    ]
+  },
+  "started": "2026-11-09 16:03:59"
+}

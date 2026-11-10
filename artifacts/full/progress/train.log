@@ -1,0 +1,262 @@
+16:03:59 Run started: steps ['baselines', 'partA', 'missing', 'features', 'tune', 'final', 'team', 'holdout', 'analysis', 'trust'] | estimated total 2h 25m
+16:03:59 START baselines (0 tasks, estimate 0m 30s)
+16:04:13   done Dummy (majority) | fold 0 (0m 00s) [1/10]  step ETA 2m 07s
+16:04:13   done Rule (business trip + Business class) | fold 3 (0m 00s) [2/10]  step ETA 0m 56s
+16:04:13   done Rule (business trip + Business class) | fold 1 (0m 00s) [3/10]  step ETA 0m 33s
+16:04:13   done Dummy (majority) | fold 4 (0m 00s) [4/10]  step ETA 0m 21s
+16:04:13   done Rule (business trip + Business class) | fold 0 (0m 00s) [5/10]  step ETA 0m 14s
+16:04:13   done Rule (business trip + Business class) | fold 2 (0m 00s) [6/10]  step ETA 0m 09s
+16:04:13   done Dummy (majority) | fold 1 (0m 00s) [7/10]  step ETA 0m 06s
+16:04:13   done Dummy (majority) | fold 3 (0m 00s) [8/10]  step ETA 0m 03s
+16:04:13   done Dummy (majority) | fold 2 (0m 00s) [9/10]  step ETA 0m 01s
+16:04:13   done Rule (business trip + Business class) | fold 4 (0m 00s) [10/10]  step ETA 0m 00s
+16:04:14 END baselines in 0m 14s
+16:04:14 START partA (0 tasks, estimate 5m 00s)
+16:05:07   done 2. SVM (RBF, 20k rows) | fold 1 (0m 39s) [1/40]  step ETA 34m 08s
+16:05:07   done 2. SVM (RBF, 20k rows) | fold 0 (0m 34s) [2/40]  step ETA 16m 38s
+16:05:12   done 2. SVM (RBF, 20k rows) | fold 2 (0m 44s) [3/40]  step ETA 11m 56s
+16:05:22   done 2. SVM (RBF, 20k rows) | fold 3 (0m 48s) [4/40]  step ETA 10m 13s
+16:05:34   done 2. SVM (RBF, 20k rows) | fold 4 (0m 53s) [5/40]  step ETA 9m 17s
+16:05:42   done 3. MLP | fold 0 (0m 29s) [6/40]  step ETA 8m 19s
+16:05:53   done 3. MLP | fold 1 (0m 31s) [7/40]  step ETA 7m 47s
+16:05:55   done 3. MLP | fold 2 (0m 21s) [8/40]  step ETA 6m 44s
+16:06:10   done 3. MLP | fold 4 (0m 16s) [9/40]  step ETA 6m 39s
+16:06:11   done 3. MLP | fold 3 (0m 29s) [10/40]  step ETA 5m 51s
+16:06:23   done 2. Bagging-SVM (default) | fold 1 (1m 30s) [11/40]  step ETA 5m 40s
+16:06:27   done 2. Bagging-SVM (default) | fold 0 (1m 39s) [12/40]  step ETA 5m 11s
+16:06:32   done 2. Bagging-SVM (default) | fold 3 (1m 30s) [13/40]  step ETA 4m 46s
+16:06:36   done 1. KNN | fold 0 (0m 03s) [14/40]  step ETA 4m 22s
+16:06:36   done 2. Bagging-SVM (default) | fold 2 (1m 39s) [15/40]  step ETA 3m 55s
+16:06:40   done 1. KNN | fold 1 (0m 04s) [16/40]  step ETA 3m 38s
+16:06:40   done 1. KNN | fold 2 (0m 04s) [17/40]  step ETA 3m 17s
+16:06:44   done 1. KNN | fold 4 (0m 04s) [18/40]  step ETA 3m 03s
+16:06:44   done 1. KNN | fold 3 (0m 04s) [19/40]  step ETA 2m 45s
+16:06:52   done 2. Bagging-SVM (default) | fold 4 (1m 45s) [20/40]  step ETA 2m 38s
+16:07:19   done 1. Bagging-KNN (default) | fold 0 (0m 34s) [21/40]  step ETA 2m 47s
+16:07:20   done 1. Bagging-KNN (default) | fold 1 (0m 35s) [22/40]  step ETA 2m 31s
+16:07:27   done 1. Bagging-KNN (default) | fold 2 (0m 34s) [23/40]  step ETA 2m 22s
+16:07:29   done 3. Seed-bagged MLP (default) | fold 0 (1m 33s) [24/40]  step ETA 2m 09s
+16:07:40   done 3. Seed-bagged MLP (default) | fold 1 (1m 29s) [25/40]  step ETA 2m 03s
+16:07:42   done 4. XGBoost (default) | fold 1 (0m 13s) [26/40]  step ETA 1m 51s
+16:07:45   done 4. XGBoost (default) | fold 0 (0m 17s) [27/40]  step ETA 1m 41s
+16:07:49   done 3. Seed-bagged MLP (default) | fold 3 (1m 26s) [28/40]  step ETA 1m 32s
+16:07:50   done 1. Bagging-KNN (default) | fold 3 (0m 31s) [29/40]  step ETA 1m 22s
+16:07:51   done 4. Decision Tree | fold 0 (0m 01s) [30/40]  step ETA 1m 12s
+16:07:52   done 4. Decision Tree | fold 1 (0m 01s) [31/40]  step ETA 1m 03s
+16:07:52   done 1. Bagging-KNN (default) | fold 4 (0m 32s) [32/40]  step ETA 0m 54s
+16:07:53   done 4. Decision Tree | fold 2 (0m 01s) [33/40]  step ETA 0m 46s
+16:07:53   done 4. XGBoost (default) | fold 2 (0m 13s) [34/40]  step ETA 0m 38s
+16:07:53   done 4. Decision Tree | fold 3 (0m 01s) [35/40]  step ETA 0m 31s
+16:07:54   done 4. XGBoost (default) | fold 3 (0m 11s) [36/40]  step ETA 0m 24s
+16:07:54   done 4. Decision Tree | fold 4 (0m 01s) [37/40]  step ETA 0m 17s
+16:07:55   done 4. XGBoost (default) | fold 4 (0m 09s) [38/40]  step ETA 0m 11s
+16:07:57   done 3. Seed-bagged MLP (default) | fold 4 (1m 29s) [39/40]  step ETA 0m 05s
+16:07:57   done 3. Seed-bagged MLP (default) | fold 2 (1m 45s) [40/40]  step ETA 0m 00s
+16:08:00 END partA in 3m 46s
+16:08:00 START missing (0 tasks, estimate 2m 30s)
+16:08:23   done KNN | Drop incomplete rows | fold 2 (0m 00s) [1/5]  step ETA 1m 30s
+16:08:23   done KNN | Drop incomplete rows | fold 3 (0m 00s) [2/5]  step ETA 0m 34s
+16:08:23   done KNN | Drop incomplete rows | fold 1 (0m 00s) [3/5]  step ETA 0m 15s
+16:08:23   done KNN | Drop incomplete rows | fold 0 (0m 00s) [4/5]  step ETA 0m 05s
+16:08:23   done KNN | Drop incomplete rows | fold 4 (0m 00s) [5/5]  step ETA 0m 00s
+16:08:34   done KNN | Ratings: keep 0 as a value | fold 2 (0m 00s) [6/10]  step ETA 0m 22s
+16:08:34   done KNN | Ratings: keep 0 as a value | fold 4 (0m 00s) [7/10]  step ETA 0m 14s
+16:08:34   done KNN | Ratings: keep 0 as a value | fold 0 (0m 00s) [8/10]  step ETA 0m 08s
+16:08:34   done KNN | Ratings: keep 0 as a value | fold 1 (0m 00s) [9/10]  step ETA 0m 03s
+16:08:34   done KNN | Ratings: keep 0 as a value | fold 3 (0m 00s) [10/10]  step ETA 0m 00s
+16:08:44   done KNN | Ratings: 0 -> median + count (default) | fold 1 (0m 00s) [11/15]  step ETA 0m 16s
+16:08:44   done KNN | Ratings: 0 -> median + count (default) | fold 2 (0m 00s) [12/15]  step ETA 0m 11s
+16:08:44   done KNN | Ratings: 0 -> median + count (default) | fold 4 (0m 00s) [13/15]  step ETA 0m 06s
+16:08:44   done KNN | Ratings: 0 -> median + count (default) | fold 0 (0m 00s) [14/15]  step ETA 0m 03s
+16:08:44   done KNN | Ratings: 0 -> median + count (default) | fold 3 (0m 00s) [15/15]  step ETA 0m 00s
+16:08:54   done KNN | Arrival delay <- median | fold 2 (0m 00s) [16/20]  step ETA 0m 13s
+16:08:54   done KNN | Arrival delay <- median | fold 3 (0m 00s) [17/20]  step ETA 0m 09s
+16:08:54   done KNN | Arrival delay <- median | fold 0 (0m 00s) [18/20]  step ETA 0m 05s
+16:08:54   done KNN | Arrival delay <- median | fold 1 (0m 00s) [19/20]  step ETA 0m 02s
+16:08:54   done KNN | Arrival delay <- median | fold 4 (0m 00s) [20/20]  step ETA 0m 00s
+16:09:03   done KNN | Arrival delay <- departure delay (default) | fold 1 (0m 00s) [21/25]  step ETA 0m 11s
+16:09:03   done KNN | Arrival delay <- departure delay (default) | fold 0 (0m 00s) [22/25]  step ETA 0m 08s
+16:09:03   done KNN | Arrival delay <- departure delay (default) | fold 2 (0m 00s) [23/25]  step ETA 0m 05s
+16:09:03   done KNN | Arrival delay <- departure delay (default) | fold 3 (0m 00s) [24/25]  step ETA 0m 02s
+16:09:03   done KNN | Arrival delay <- departure delay (default) | fold 4 (0m 00s) [25/25]  step ETA 0m 00s
+16:09:11   done XGBoost | Drop incomplete rows | fold 0 (0m 00s) [26/30]  step ETA 0m 10s
+16:09:11   done XGBoost | Drop incomplete rows | fold 3 (0m 00s) [27/30]  step ETA 0m 07s
+16:09:11   done XGBoost | Drop incomplete rows | fold 1 (0m 00s) [28/30]  step ETA 0m 05s
+16:09:11   done XGBoost | Drop incomplete rows | fold 2 (0m 00s) [29/30]  step ETA 0m 02s
+16:09:11   done XGBoost | Drop incomplete rows | fold 4 (0m 00s) [30/30]  step ETA 0m 00s
+16:09:20   done XGBoost | Ratings: keep 0 as a value | fold 3 (0m 00s) [31/35]  step ETA 0m 10s
+16:09:20   done XGBoost | Ratings: keep 0 as a value | fold 4 (0m 00s) [32/35]  step ETA 0m 07s
+16:09:20   done XGBoost | Ratings: keep 0 as a value | fold 0 (0m 00s) [33/35]  step ETA 0m 04s
+16:09:20   done XGBoost | Ratings: keep 0 as a value | fold 2 (0m 00s) [34/35]  step ETA 0m 02s
+16:09:20   done XGBoost | Ratings: keep 0 as a value | fold 1 (0m 00s) [35/35]  step ETA 0m 00s
+16:09:29   done XGBoost | Ratings: 0 -> median + count (default) | fold 4 (0m 00s) [36/40]  step ETA 0m 09s
+16:09:29   done XGBoost | Ratings: 0 -> median + count (default) | fold 0 (0m 00s) [37/40]  step ETA 0m 07s
+16:09:29   done XGBoost | Ratings: 0 -> median + count (default) | fold 1 (0m 00s) [38/40]  step ETA 0m 04s
+16:09:29   done XGBoost | Ratings: 0 -> median + count (default) | fold 3 (0m 00s) [39/40]  step ETA 0m 02s
+16:09:29   done XGBoost | Ratings: 0 -> median + count (default) | fold 2 (0m 00s) [40/40]  step ETA 0m 00s
+16:09:38   done XGBoost | Arrival delay <- median | fold 1 (0m 00s) [41/45]  step ETA 0m 09s
+16:09:38   done XGBoost | Arrival delay <- median | fold 2 (0m 00s) [42/45]  step ETA 0m 06s
+16:09:38   done XGBoost | Arrival delay <- median | fold 3 (0m 00s) [43/45]  step ETA 0m 04s
+16:09:38   done XGBoost | Arrival delay <- median | fold 0 (0m 00s) [44/45]  step ETA 0m 02s
+16:09:38   done XGBoost | Arrival delay <- median | fold 4 (0m 00s) [45/45]  step ETA 0m 00s
+16:09:46   done XGBoost | Arrival delay <- departure delay (default) | fold 2 (0m 00s) [46/50]  step ETA 0m 09s
+16:09:46   done XGBoost | Arrival delay <- departure delay (default) | fold 1 (0m 00s) [47/50]  step ETA 0m 06s
+16:09:46   done XGBoost | Arrival delay <- departure delay (default) | fold 0 (0m 00s) [48/50]  step ETA 0m 04s
+16:09:46   done XGBoost | Arrival delay <- departure delay (default) | fold 4 (0m 00s) [49/50]  step ETA 0m 02s
+16:09:46   done XGBoost | Arrival delay <- departure delay (default) | fold 3 (0m 00s) [50/50]  step ETA 0m 00s
+16:09:47 END missing in 1m 46s
+16:09:47 START features (0 tasks, estimate 3m 20s)
+16:10:14   done Top 12 by mutual information | fold 2 (0m 02s) [1/40]  step ETA 17m 29s
+16:10:14   done Drop arrival delay (redundant, r=0.965) | fold 3 (0m 01s) [2/40]  step ETA 8m 31s
+16:10:14   done Top 8 by mutual information | fold 2 (0m 02s) [3/40]  step ETA 5m 31s
+16:10:14   done All 25 engineered features | fold 2 (0m 00s) [4/40]  step ETA 4m 02s
+16:10:14   done Top 16 by mutual information | fold 4 (0m 02s) [5/40]  step ETA 3m 08s
+16:10:14   done Top 8 by mutual information | fold 3 (0m 02s) [6/40]  step ETA 2m 32s
+16:10:14   done All 25 engineered features | fold 0 (0m 00s) [7/40]  step ETA 2m 06s
+16:10:14   done Top 16 by mutual information | fold 1 (0m 03s) [8/40]  step ETA 1m 47s
+16:10:14   done All 25 engineered features | fold 3 (0m 00s) [9/40]  step ETA 1m 32s
+16:10:14   done Drop arrival delay (redundant, r=0.965) | fold 4 (0m 01s) [10/40]  step ETA 1m 20s
+16:10:14   done Drop arrival delay (redundant, r=0.965) | fold 2 (0m 01s) [11/40]  step ETA 1m 10s
+16:10:14   done Top 20 by mutual information | fold 1 (0m 03s) [12/40]  step ETA 1m 02s
+16:10:14   done Drop derived features | fold 0 (0m 01s) [13/40]  step ETA 0m 55s
+16:10:14   done Top 16 by mutual information | fold 0 (0m 02s) [14/40]  step ETA 0m 50s
+16:10:14   done All 25 engineered features | fold 4 (0m 00s) [15/40]  step ETA 0m 44s
+16:10:14   done Drop arrival delay (redundant, r=0.965) | fold 0 (0m 01s) [16/40]  step ETA 0m 40s
+16:10:14   done Top 8 by mutual information | fold 4 (0m 02s) [17/40]  step ETA 0m 36s
+16:10:14   done Top 20 by mutual information | fold 4 (0m 02s) [18/40]  step ETA 0m 32s
+16:10:14   done Top 12 by mutual information | fold 4 (0m 02s) [19/40]  step ETA 0m 29s
+16:10:14   done Top 12 by mutual information | fold 1 (0m 02s) [20/40]  step ETA 0m 26s
+16:10:14   done All 25 engineered features | fold 1 (0m 00s) [21/40]  step ETA 0m 24s
+16:10:14   done Top 16 by mutual information | fold 3 (0m 03s) [22/40]  step ETA 0m 22s
+16:10:14   done Top 8 by mutual information | fold 0 (0m 02s) [23/40]  step ETA 0m 19s
+16:10:14   done Top 20 by mutual information | fold 2 (0m 03s) [24/40]  step ETA 0m 17s
+16:10:14   done Drop arrival delay (redundant, r=0.965) | fold 1 (0m 01s) [25/40]  step ETA 0m 16s
+16:10:14   done Top 20 by mutual information | fold 3 (0m 02s) [26/40]  step ETA 0m 14s
+16:10:14   done Top 12 by mutual information | fold 3 (0m 02s) [27/40]  step ETA 0m 12s
+16:10:14   done Top 12 by mutual information | fold 0 (0m 02s) [28/40]  step ETA 0m 11s
+16:10:14   done Top 16 by mutual information | fold 2 (0m 02s) [29/40]  step ETA 0m 10s
+16:10:14   done Top 20 by mutual information | fold 0 (0m 02s) [30/40]  step ETA 0m 08s
+16:10:14   done Top 8 by mutual information | fold 1 (0m 02s) [31/40]  step ETA 0m 07s
+16:10:14   done Drop derived features | fold 1 (0m 00s) [32/40]  step ETA 0m 06s
+16:10:15   done Drop derived features | fold 2 (0m 01s) [33/40]  step ETA 0m 05s
+16:10:15   done Drop derived features | fold 4 (0m 01s) [34/40]  step ETA 0m 04s
+16:10:15   done Drop derived features | fold 3 (0m 01s) [35/40]  step ETA 0m 04s
+16:10:15   done Drop demographics (gender, age) | fold 2 (0m 01s) [36/40]  step ETA 0m 03s
+16:10:15   done Drop demographics (gender, age) | fold 3 (0m 01s) [37/40]  step ETA 0m 02s
+16:10:15   done Drop demographics (gender, age) | fold 4 (0m 01s) [38/40]  step ETA 0m 01s
+16:10:15   done Drop demographics (gender, age) | fold 1 (0m 01s) [39/40]  step ETA 0m 00s
+16:10:15   done Drop demographics (gender, age) | fold 0 (0m 01s) [40/40]  step ETA 0m 00s
+16:10:16 END features in 0m 29s
+16:10:16 START tune (0 tasks, estimate 1h 30m)
+16:14:24   done tune xgb (3m 53s) [1/4]  step ETA 12m 23s
+16:47:21   done tune mlp (36m 59s) [2/4]  step ETA 37m 04s
+17:04:16   done tune svm (53m 56s) [3/4]  step ETA 17m 59s
+17:35:49   done tune knn (1h 25m) [4/4]  step ETA 0m 00s
+17:35:50 END tune in 1h 25m
+17:35:50 START final (0 tasks, estimate 15m 00s)
+17:40:07   done svm | fold 0 (4m 14s) [1/60]  step ETA 4h 12m
+17:40:08   done svm | fold 1 (4m 12s) [2/60]  step ETA 2h 04m
+17:40:47   done svm | fold 2 (4m 47s) [3/60]  step ETA 1h 34m
+17:41:00   done svm | fold 4 (4m 48s) [4/60]  step ETA 1h 12m
+17:41:10   done 2. Bagging-SVM (sigmoid calibration) | fold 0 (4m 51s) [5/60]  step ETA 58m 44s
+17:41:13   done svm | fold 3 (5m 07s) [6/60]  step ETA 48m 25s
+17:41:49   done 2. Bagging-SVM (sigmoid calibration) | fold 1 (5m 04s) [7/60]  step ETA 45m 17s
+17:42:50   done 2. Bagging-SVM (sigmoid calibration) | fold 2 (5m 23s) [8/60]  step ETA 45m 30s
+17:43:47   done 2. Bagging-SVM (sigmoid calibration) | fold 4 (3m 39s) [9/60]  step ETA 45m 04s
+17:43:52   done 2. Bagging-SVM (sigmoid calibration) | fold 3 (3m 44s) [10/60]  step ETA 40m 09s
+17:46:53   done mlp | fold 1 (5m 53s) [11/60]  step ETA 49m 14s
+17:47:07   done 1. Bagging-KNN + NCA | fold 0 (4m 16s) [12/60]  step ETA 45m 06s
+17:48:35   done 1. Bagging-KNN + NCA | fold 1 (4m 47s) [13/60]  step ETA 46m 05s
+17:48:42   done mlp | fold 2 (7m 31s) [14/60]  step ETA 42m 16s
+17:48:55   done 1. Bagging-KNN + NCA | fold 2 (5m 03s) [15/60]  step ETA 39m 15s
+17:49:25   done mlp | fold 3 (8m 12s) [16/60]  step ETA 37m 22s
+17:49:46   done mlp | fold 4 (7m 57s) [17/60]  step ETA 35m 14s
+17:50:57   done mlp | fold 0 (10m 10s) [18/60]  step ETA 35m 17s
+17:51:01   done 1. Bagging-KNN + NCA | fold 3 (4m 07s) [19/60]  step ETA 32m 45s
+17:51:03   done 1. Bagging-KNN + NCA | fold 4 (3m 56s) [20/60]  step ETA 30m 27s
+17:53:16   done 3. Bootstrap-bagged MLP | fold 0 (4m 41s) [21/60]  step ETA 32m 23s
+17:53:18   done 3. Bootstrap-bagged MLP | fold 1 (4m 36s) [22/60]  step ETA 30m 10s
+17:55:47   done knn | fold 1 (4m 46s) [23/60]  step ETA 32m 06s
+17:55:53   done knn | fold 2 (4m 49s) [24/60]  step ETA 30m 05s
+17:56:10   done knn | fold 0 (5m 12s) [25/60]  step ETA 28m 28s
+17:56:19   done 3. Bootstrap-bagged MLP | fold 2 (7m 24s) [26/60]  step ETA 26m 47s
+17:56:53   done 3. Bootstrap-bagged MLP | fold 3 (7m 27s) [27/60]  step ETA 25m 43s
+17:57:27   done 3. Bootstrap-bagged MLP | fold 4 (7m 41s) [28/60]  step ETA 24m 42s
+17:57:40   done knn | fold 4 (4m 21s) [29/60]  step ETA 23m 20s
+17:57:57   done knn | fold 3 (4m 40s) [30/60]  step ETA 22m 07s
+17:59:17   done 2. Nystroem + LinearSVC (all rows) | fold 1 (1m 36s) [31/60]  step ETA 21m 55s
+17:59:51   done 2. Nystroem + LinearSVC (all rows) | fold 2 (1m 54s) [32/60]  step ETA 21m 01s
+17:59:54   done 2. Nystroem + LinearSVC (all rows) | fold 0 (2m 26s) [33/60]  step ETA 19m 41s
+18:00:55   done 2. Nystroem + LinearSVC (all rows) | fold 3 (1m 38s) [34/60]  step ETA 19m 10s
+18:00:56   done 4. AdaBoost (depth-2 trees) | fold 0 (1m 01s) [35/60]  step ETA 17m 55s
+18:01:12   done 2. Nystroem + LinearSVC (all rows) | fold 4 (1m 20s) [36/60]  step ETA 16m 54s
+18:01:39   done 4. AdaBoost (depth-2 trees) | fold 1 (0m 44s) [37/60]  step ETA 16m 02s
+18:01:51   done 4. AdaBoost (depth-2 trees) | fold 2 (0m 55s) [38/60]  step ETA 15m 03s
+18:02:00   done 1. Bagging-KNN (Euclidean) | fold 3 (5m 40s) [39/60]  step ETA 14m 05s
+18:02:02   done xgb | fold 0 (0m 10s) [40/60]  step ETA 13m 05s
+18:02:03   done 4. AdaBoost (depth-2 trees) | fold 3 (0m 50s) [41/60]  step ETA 12m 09s
+18:02:05   done 1. Bagging-KNN (Euclidean) | fold 0 (6m 18s) [42/60]  step ETA 11m 15s
+18:02:08   done xgb | fold 1 (0m 07s) [43/60]  step ETA 10m 23s
+18:02:11   done xgb | fold 2 (0m 09s) [44/60]  step ETA 9m 34s
+18:02:13   done xgb | fold 3 (0m 09s) [45/60]  step ETA 8m 47s
+18:02:13   done 4. XGBoost (monotone constraints) | fold 0 (0m 05s) [46/60]  step ETA 8m 01s
+18:02:13   done xgb | fold 4 (0m 07s) [47/60]  step ETA 7m 17s
+18:02:17   done 4. XGBoost (monotone constraints) | fold 1 (0m 05s) [48/60]  step ETA 6m 36s
+18:02:17   done 1. Bagging-KNN (Euclidean) | fold 1 (6m 23s) [49/60]  step ETA 5m 56s
+18:02:18   done 4. XGBoost (monotone constraints) | fold 2 (0m 04s) [50/60]  step ETA 5m 17s
+18:02:18   done 4. XGBoost (monotone constraints) | fold 4 (0m 04s) [51/60]  step ETA 4m 40s
+18:02:19   done 4. XGBoost (monotone constraints) | fold 3 (0m 06s) [52/60]  step ETA 4m 04s
+18:02:21   done 4. AdaBoost (depth-2 trees) | fold 4 (0m 41s) [53/60]  step ETA 3m 30s
+18:02:29   done 1. Bagging-KNN (Euclidean) | fold 4 (5m 36s) [54/60]  step ETA 2m 57s
+18:02:34   done 1. Bagging-KNN (Euclidean) | fold 2 (6m 23s) [55/60]  step ETA 2m 25s
+18:02:34   done 4. Decision Tree (cost-complexity pruned) | fold 0 (0m 17s) [56/60]  step ETA 1m 54s
+18:02:34   done 4. Decision Tree (cost-complexity pruned) | fold 1 (0m 16s) [57/60]  step ETA 1m 24s
+18:02:34   done 4. Decision Tree (cost-complexity pruned) | fold 2 (0m 16s) [58/60]  step ETA 0m 55s
+18:02:34   done 4. Decision Tree (cost-complexity pruned) | fold 3 (0m 16s) [59/60]  step ETA 0m 27s
+18:02:35   done 4. Decision Tree (cost-complexity pruned) | fold 4 (0m 16s) [60/60]  step ETA 0m 00s
+18:02:38 END final in 26m 48s
+18:02:38 START team (0 tasks, estimate 0m 30s)
+18:02:47 END team in 0m 08s
+18:02:47 START holdout (0 tasks, estimate 8m 20s)
+18:03:27   done svm_base (0m 24s) [1/21]  step ETA 13m 18s
+18:03:50   done mlp_base (0m 32s) [2/21]  step ETA 9m 58s
+18:03:51   done knn_base (0m 00s) [3/21]  step ETA 6m 23s
+18:03:57   done knn::Bagging-KNN (Euclidean) (0m 04s) [4/21]  step ETA 4m 59s
+18:04:16   done knn::Bagging-KNN + NCA (1m 09s) [5/21]  step ETA 4m 46s
+18:04:16   done dummy (0m 00s) [6/21]  step ETA 3m 44s
+18:04:16   done rule (0m 00s) [7/21]  step ETA 2m 59s
+18:04:31   done xgb (0m 14s) [8/21]  step ETA 2m 49s
+18:04:32   done xgb_base (0m 01s) [9/21]  step ETA 2m 21s
+18:04:39   done knn (1m 11s) [10/21]  step ETA 2m 04s
+18:04:46   done xgb::XGBoost (monotone constraints) (0m 07s) [11/21]  step ETA 1m 48s
+18:04:51   done stage::Booked (0m 04s) [12/21]  step ETA 1m 32s
+18:05:02   done stage::At the airport (0m 11s) [13/21]  step ETA 1m 23s
+18:05:03   done xgb::Decision Tree (cost-complexity pruned) (0m 31s) [14/21]  step ETA 1m 08s
+18:05:04   done svm::Nystroem + LinearSVC (all rows) (2m 07s) [15/21]  step ETA 0m 54s
+18:05:09   done stage::In flight (0m 06s) [16/21]  step ETA 0m 44s
+18:05:14   done xgb::AdaBoost (depth-2 trees) (1m 16s) [17/21]  step ETA 0m 34s
+18:05:51   done svm (3m 01s) [18/21]  step ETA 0m 30s
+18:05:54   done svm::Bagging-SVM (sigmoid calibration) (2m 53s) [19/21]  step ETA 0m 19s
+18:06:44   done mlp::Bootstrap-bagged MLP (3m 26s) [20/21]  step ETA 0m 11s
+18:07:36   done mlp (4m 25s) [21/21]  step ETA 0m 00s
+18:19:15 END holdout in 16m 28s
+18:19:15 START analysis (0 tasks, estimate 12m 00s)
+18:22:45   done 5x2cv mlp vs xgb (3m 11s) [1/8]  step ETA 24m 34s
+18:25:07   done 5x2cv mlp vs rule (2m 21s) [2/8]  step ETA 17m 36s
+18:26:28   done learning curve svm (7m 00s) [3/8]  step ETA 12m 01s
+18:26:40   done 5x2cv mlp vs svm (7m 20s) [4/8]  step ETA 7m 25s
+18:27:08   done learning curve xgb (0m 27s) [5/8]  step ETA 4m 44s
+18:27:18   done learning curve mlp (2m 11s) [6/8]  step ETA 2m 41s
+18:31:57   done 5x2cv mlp vs knn (12m 34s) [7/8]  step ETA 1m 48s
+18:36:47   done learning curve knn (10m 19s) [8/8]  step ETA 0m 00s
+18:36:48   done McNemar (0m 00s) [9/12]  step ETA 5m 50s
+18:39:02   done bootstrap CIs (2m 14s) [10/12]  step ETA 3m 57s
+18:46:51   done robustness (7m 48s) [11/12]  step ETA 2m 30s
+18:46:51   done fairness (0m 00s) [12/12]  step ETA 0m 00s
+18:46:51 END analysis in 27m 36s
+18:46:51 START trust (0 tasks, estimate 8m 00s)
+18:46:59   done OOD detector (0m 01s) [1/3]  step ETA 0m 15s
+18:48:18   done surrogate rules (1m 18s) [2/3]  step ETA 0m 43s
+18:50:25   done monotonicity check (2m 07s) [3/3]  step ETA 0m 00s
+18:50:26 END trust in 3m 34s
+18:50:26 RUN DONE in 2h 46m
