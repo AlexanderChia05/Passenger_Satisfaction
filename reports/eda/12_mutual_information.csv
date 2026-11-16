@@ -1,0 +1,23 @@
+,mutual_info
+Departure Delay in Minutes,0.0
+Gender,0.0001
+Departure/Arrival time convenient,0.003
+Gate location,0.0108
+Arrival Delay in Minutes,0.0112
+Customer Type,0.0188
+Food and drink,0.026
+Checkin service,0.0324
+Inflight service,0.0418
+Baggage handling,0.0434
+Age,0.0466
+Ease of Online booking,0.0486
+Cleanliness,0.0534
+On-board service,0.0587
+Leg room service,0.062
+Flight Distance,0.0634
+Seat comfort,0.078
+Inflight entertainment,0.0966
+Type of Travel,0.1134
+Class,0.1326
+Inflight wifi service,0.16
+Online boarding,0.2084

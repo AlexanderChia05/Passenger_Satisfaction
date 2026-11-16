@@ -1,0 +1,23 @@
+feature,PSI,status
+Gender,0.0,stable
+Arrival Delay in Minutes,3e-05,stable
+Customer Type,3e-05,stable
+Baggage handling,7e-05,stable
+Gate location,9e-05,stable
+Class,0.00011,stable
+Type of Travel,0.00011,stable
+On-board service,0.00014,stable
+Seat comfort,0.00015,stable
+Inflight entertainment,0.00015,stable
+Departure Delay in Minutes,0.00015,stable
+Checkin service,0.00015,stable
+Cleanliness,0.00016,stable
+Departure/Arrival time convenient,0.00019,stable
+Inflight wifi service,0.00023,stable
+Food and drink,0.00024,stable
+Inflight service,0.00024,stable
+Leg room service,0.00031,stable
+Flight Distance,0.00041,stable
+Ease of Online booking,0.0005,stable
+Age,0.0005,stable
+Online boarding,0.00057,stable

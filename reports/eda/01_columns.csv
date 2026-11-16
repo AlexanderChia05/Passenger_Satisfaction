@@ -1,0 +1,24 @@
+column,dtype,role,unique,example
+Gender,str,categorical,2,Male
+Customer Type,str,categorical,2,Loyal Customer
+Age,int64,numeric,75,13
+Type of Travel,str,categorical,2,Personal Travel
+Class,str,categorical,3,Eco Plus
+Flight Distance,int64,numeric,3802,460
+Inflight wifi service,int64,rating 0-5,6,3
+Departure/Arrival time convenient,int64,rating 0-5,6,4
+Ease of Online booking,int64,rating 0-5,6,3
+Gate location,int64,rating 0-5,6,1
+Food and drink,int64,rating 0-5,6,5
+Online boarding,int64,rating 0-5,6,3
+Seat comfort,int64,rating 0-5,6,5
+Inflight entertainment,int64,rating 0-5,6,5
+On-board service,int64,rating 0-5,6,4
+Leg room service,int64,rating 0-5,6,3
+Baggage handling,int64,rating 0-5,5,4
+Checkin service,int64,rating 0-5,6,4
+Inflight service,int64,rating 0-5,6,5
+Cleanliness,int64,rating 0-5,6,5
+Departure Delay in Minutes,int64,numeric,446,25
+Arrival Delay in Minutes,float64,numeric,455,18.0
+satisfaction,str,target,2,neutral or dissatisfied

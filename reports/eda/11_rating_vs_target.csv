@@ -1,0 +1,15 @@
+,score 0,score 1,score 2,score 3,score 4,score 5,lift 5 vs 1
+Online boarding,0.556,0.138,0.115,0.136,0.623,0.872,0.734
+Inflight wifi service,0.997,0.325,0.249,0.251,0.599,0.991,0.665
+Inflight entertainment,,0.14,0.213,0.27,0.612,0.648,0.509
+On-board service,,0.194,0.256,0.316,0.537,0.642,0.449
+Seat comfort,,0.223,0.224,0.212,0.561,0.65,0.427
+Cleanliness,,0.196,0.213,0.432,0.535,0.609,0.413
+Leg room service,0.352,0.203,0.275,0.272,0.582,0.614,0.412
+Checkin service,,0.239,0.252,0.448,0.46,0.61,0.371
+Ease of Online booking,0.664,0.376,0.304,0.308,0.531,0.738,0.362
+Food and drink,0.467,0.2,0.388,0.396,0.525,0.549,0.349
+Inflight service,,0.29,0.301,0.239,0.478,0.61,0.32
+Baggage handling,,0.298,0.295,0.236,0.481,0.613,0.315
+Gate location,,0.496,0.461,0.347,0.389,0.572,0.077
+Departure/Arrival time convenient,0.475,0.487,0.445,0.438,0.388,0.425,-0.061
