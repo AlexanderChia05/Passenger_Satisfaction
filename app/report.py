@@ -13,10 +13,12 @@ NAVY, AMBER = colors.HexColor("#0b1220"), colors.HexColor("#c98a00")
 
 
 def _fonts():
+    """Regular and bold font names for the PDF."""
     return "Helvetica", "Helvetica-Bold"
 
 
 def _table(rows, widths, font, bold):
+    """Styled reportlab table."""
     tb = Table([[str(c) for c in r] for r in rows], colWidths=widths)
     tb.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), NAVY), ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
@@ -29,6 +31,9 @@ def _table(rows, widths, font, bold):
 
 def build_pdf(passenger: dict, seat: str, cabin: str, verdict: str, good: bool, p_team: float, conformal: str,
               model_rows: list, drivers: list, upgrades: list, ood_pct: float) -> bytes:
+    """One-page passenger report (verdict, conformal set, model votes, drivers and the
+    cheapest service-recovery plan) returned as PDF bytes.
+    """
     font, bold = _fonts()
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=16 * mm, rightMargin=16 * mm, topMargin=14 * mm, bottomMargin=14 * mm)

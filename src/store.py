@@ -13,6 +13,9 @@ XZ = ("xz", 9)  # ~6x smaller than zlib here: bagged KNNs hold many near-identic
 
 
 def save_variants(variants: dict, out: Path, compress=XZ) -> None:
+    """Save the variants dict as two xz-compressed files (team ensembles separately),
+    keeping each file under GitHub's 100 MB limit.
+    """
     out = Path(out)
     team = {k: v for k, v in variants.items() if k.startswith("team")}
     rest = {k: v for k, v in variants.items() if k not in team}
@@ -24,6 +27,7 @@ def save_variants(variants: dict, out: Path, compress=XZ) -> None:
 
 
 def load_variants(out: Path) -> dict:
+    """Load and merge every variants*.joblib file in `out`."""
     merged = {}
     for f in sorted(Path(out).glob("variants*.joblib")):
         merged.update(joblib.load(f))

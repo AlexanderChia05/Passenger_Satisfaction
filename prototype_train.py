@@ -27,6 +27,7 @@ FIT_ROWS, CAL_ROWS = 20_000, 10_000
 
 
 def metrics(y, p):
+    """Hold-out metrics for one model's probabilities."""
     pred = (p >= 0.5).astype(int)
     return {
         "Accuracy": accuracy_score(y, pred),
@@ -41,6 +42,7 @@ def metrics(y, p):
 
 
 def fit_all(estimators: dict, X, y) -> tuple[dict, dict]:
+    """Fit every prototype model on the training subsample and time it."""
     fitted, secs = {}, {}
     for key, model in estimators.items():
         t0 = time.perf_counter()
@@ -56,6 +58,7 @@ def fit_all(estimators: dict, X, y) -> tuple[dict, dict]:
 
 
 def main():
+    """Quick (~1 minute) prototype: untuned models on 20k rows so the app runs before full training."""
     C.ARTIFACTS.mkdir(exist_ok=True)
     X_train, y_train = split_xy(load_raw("train"))
     X_test, y_test = split_xy(load_raw("test"))

@@ -11,12 +11,32 @@ from . import config as C
 
 
 def load_raw(split: str) -> pd.DataFrame:
-    """Load train/test CSV, drop index/id columns."""
-    df = pd.read_csv(C.DATA_RAW / f"{split}.csv")
-    return df.drop(columns=[c for c in C.DROP_COLS if c in df.columns])
+    """Load the Kaggle train/test CSV and drop the index/id columns (no predictive meaning).
+
+    Raises a clear error instead of a pandas traceback when the file is missing or is not the
+    expected dataset, because a wrong file would otherwise fail much later inside a model.
+    """
+    if split not in ("train", "test"):
+        raise ValueError(f"split must be 'train' or 'test', got {split!r}")
+    path = C.DATA_RAW / f"{split}.csv"
+    if not path.exists():
+        raise FileNotFoundError(f"{path} not found. Download the Kaggle dataset "
+                                "'teejmahal20/airline-passenger-satisfaction' and put train.csv / test.csv in data/raw/.")
+    try:
+        df = pd.read_csv(path)
+    except (pd.errors.ParserError, UnicodeDecodeError) as exc:
+        raise ValueError(f"{path} is not a readable CSV file: {exc}") from exc
+    df = df.drop(columns=[c for c in C.DROP_COLS if c in df.columns])
+    missing = [c for c in C.FEATURE_COLS + [C.TARGET] if c not in df.columns]
+    if missing:
+        raise ValueError(f"{path} is missing expected columns: {', '.join(missing)}")
+    return df
 
 
 def split_xy(df: pd.DataFrame):
+    """Separate features from the target; target = 1 for 'satisfied', 0 for 'neutral or dissatisfied'."""
+    if C.TARGET not in df.columns:
+        raise KeyError(f"Target column {C.TARGET!r} not found")
     y = (df[C.TARGET] == C.POSITIVE_LABEL).astype(int)
     return df[C.FEATURE_COLS].copy(), y
 
@@ -62,10 +82,14 @@ class AirlineFeatures(TransformerMixin, BaseEstimator):
     """
 
     def __init__(self, rating_zero: str = "median", arr_fill: str = "departure"):
+        """Store the missing-value strategies (tested in the Part B missing-value experiment)."""
         self.rating_zero = rating_zero
         self.arr_fill = arr_fill
 
     def fit(self, X, y=None):
+        """Learn imputation values from the TRAINING fold only (rating medians ignoring 0,
+        arrival-delay median), so validation folds never leak into preprocessing.
+        """
         ratings = X[C.RATING_COLS].replace(0, np.nan)
         self.rating_medians_ = ratings.median().fillna(3).to_dict()
         self.arr_median_ = float(pd.to_numeric(X["Arrival Delay in Minutes"], errors="coerce").median())
@@ -73,6 +97,14 @@ class AirlineFeatures(TransformerMixin, BaseEstimator):
         return self
 
     def _transform(self, X):
+        """Build the 25 model features from raw survey columns.
+
+        - categorical -> binary flags / ordinal class level (Eco < Eco Plus < Business)
+        - delays and distance -> log1p, because the EDA showed skew ~6.7 for delays
+        - delay_recovered = departure - arrival delay (time made up in the air)
+        - rating 0 means 'not applicable', so it is imputed and counted in n_unrated
+        - service_mean summarises the 14 correlated service ratings
+        """
         X = X.copy()
         out = pd.DataFrame(index=X.index)
         out["is_male"] = (X["Gender"].astype(str) == "Male").astype(float)
@@ -106,9 +138,11 @@ class AirlineFeatures(TransformerMixin, BaseEstimator):
         return out
 
     def transform(self, X):
+        """Apply the fitted feature engineering."""
         return self._transform(X)
 
     def get_feature_names_out(self, input_features=None):
+        """Engineered feature names (used for SHAP and surrogate rules)."""
         return self.feature_names_out_
 
 
@@ -117,12 +151,15 @@ class DropColumns(TransformerMixin, BaseEstimator):
     so it can be sent to parallel worker processes."""
 
     def __init__(self, columns=()):
+        """Columns to remove in a feature-ablation run."""
         self.columns = columns
 
     def fit(self, X, y=None):
+        """Nothing to learn."""
         return self
 
     def transform(self, X):
+        """Return the frame without the ablated columns."""
         return X.drop(columns=list(self.columns))
 
 
@@ -135,12 +172,15 @@ class StageMask(TransformerMixin, BaseEstimator):
     """
 
     def __init__(self, stage: str = "Landed"):
+        """Journey stage whose information level is simulated."""
         self.stage = stage
 
     def fit(self, X, y=None):
+        """Nothing to learn: the mask depends only on the stage definition."""
         return self
 
     def transform(self, X):
+        """Blank out ratings and delays that are not yet known at this stage."""
         X = X.copy()
         known = set(C.stage_known_ratings(self.stage))
         for col in C.RATING_COLS:

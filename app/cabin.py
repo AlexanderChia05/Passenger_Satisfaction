@@ -37,6 +37,7 @@ def _seat_y(blocks, seat_h):
 
 
 def _seat_svg(cls, cfg, chosen):
+    """SVG of every seat in one cabin; the passenger's chosen seat is highlighted."""
     x0, x1 = cfg["x"]
     rows = cfg["rows"]
     sw, sh = cfg["seat"]
@@ -69,6 +70,7 @@ def pick_seat(cls: str, passenger_key: str) -> str:
 
 
 def _plane_svg(selected, seat):
+    """SVG floor plan of the aircraft with every cabin's seats."""
     zones, seats = [], []
     for cls, cfg in CABINS.items():
         x0, x1 = cfg["x"]
@@ -109,8 +111,10 @@ def _plane_svg(selected, seat):
 </svg>"""
 
 
-def render(selected: str, previous: str, seat: str, verdict_good: bool, p: float, cabin_rates: dict, stage: str):
+def render(selected: str, previous: str, seat: str, verdict_good: bool, p: float, cabin_rates: dict):
+    """3D cabin view that zooms to the chosen class and colours the passenger's seat by verdict."""
     def cam(cls, focus=True):
+        """CSS camera transform: focused on one cabin or showing the whole plane."""
         cx = sum(CABINS[cls]["x"]) / 2 / W * 100
         return (f"rotateX(42deg) scale({CABINS[cls]['zoom']}) translateX({50 - cx:.2f}%)" if focus
                 else "rotateX(55deg) scale(1) translateX(0%)")
@@ -165,7 +169,7 @@ def render(selected: str, previous: str, seat: str, verdict_good: bool, p: float
   .chip span {{ margin-left:8px; color:#e9eef6; }}
 </style>
 <div class="wrap" id="wrap">
-  <div class="hud"><div class="k">{"CABIN VIEW"} · {stage.upper()}</div><div class="t">{LABELS[selected]}</div>
+  <div class="hud"><div class="k">{"CABIN VIEW"}</div><div class="t">{LABELS[selected]}</div>
     <div class="s">{"Hold-out passengers in this cabin: {p:.1f}% predicted satisfied".format(p=rate * 100 if rate is not None else 0)}</div></div>
   <div class="tag"><div class="lbl">{"PASSENGER SEAT"}</div><div class="seatno">{seat}</div>
     <div class="lbl" style="color:{color}">{"P(SATISFIED)"} {p:.2f}</div></div>

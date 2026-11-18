@@ -12,6 +12,7 @@ from src.progress import fmt_secs, read_status
 
 
 def render(out: Path) -> bool:
+    """Draw the live training progress table in the terminal."""
     overall, tasks = read_status(out)
     if overall is None:
         print("No run found in", out)
@@ -33,6 +34,7 @@ def render(out: Path) -> bool:
 
 
 def main():
+    """Refresh the progress view until the run finishes."""
     import sys
     sys.stdout.reconfigure(errors="replace")  # never crash on console encodings
     ap = argparse.ArgumentParser()

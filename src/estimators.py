@@ -31,6 +31,7 @@ class SubsampleFit(ClassifierMixin, BaseEstimator):
         self.random_state = random_state
 
     def fit(self, X, y):
+        """Fit a clone of the estimator on a stratified subsample of at most max_rows rows."""
         Xs, ys = _stratified_rows(X, np.asarray(y), self.max_rows, self.random_state)
         self.estimator_ = clone(self.estimator).fit(Xs, ys)
         self.classes_ = self.estimator_.classes_
@@ -58,6 +59,7 @@ class SubsampledNCA(TransformerMixin, BaseEstimator):
         self.random_state = random_state
 
     def fit(self, X, y):
+        """Learn the NCA projection on a stratified subsample (NCA cost grows quadratically)."""
         Xs, ys = _stratified_rows(X, np.asarray(y), self.max_rows, self.random_state)
         n_comp = None if self.n_components is None else min(self.n_components, np.asarray(X).shape[1])
         self.nca_ = NeighborhoodComponentsAnalysis(n_components=n_comp, max_iter=self.max_iter,
@@ -94,6 +96,7 @@ class XGBEarlyStop(ClassifierMixin, BaseEstimator):
         self.n_jobs = n_jobs
 
     def _xgb(self, **extra):
+        """Build the underlying XGBClassifier from this wrapper's parameters."""
         return XGBClassifier(
             n_estimators=self.n_estimators, learning_rate=self.learning_rate, max_depth=self.max_depth,
             subsample=self.subsample, colsample_bytree=self.colsample_bytree, reg_lambda=self.reg_lambda,
@@ -102,6 +105,9 @@ class XGBEarlyStop(ClassifierMixin, BaseEstimator):
             n_jobs=self.n_jobs, **extra)
 
     def fit(self, X, y):
+        """Hold out val_fraction of the training rows and stop adding trees once validation
+        log-loss has not improved for early_stopping_rounds rounds.
+        """
         y = np.asarray(y)
         X_tr, X_va, y_tr, y_va = train_test_split(X, y, test_size=self.val_fraction, stratify=y,
                                                   random_state=self.random_state)
@@ -118,6 +124,7 @@ class XGBEarlyStop(ClassifierMixin, BaseEstimator):
         return self.model_.predict(X)
 
     def get_booster(self):
+        """Underlying booster (needed for TreeSHAP contributions)."""
         return self.model_.get_booster()
 
 
@@ -138,6 +145,7 @@ class PrunedTree(ClassifierMixin, BaseEstimator):
         self.random_state = random_state
 
     def fit(self, X, y):
+        """Choose ccp_alpha on a validation split, then refit the pruned tree on all rows."""
         from sklearn.tree import DecisionTreeClassifier
         y = np.asarray(y)
         X_tr, X_va, y_tr, y_va = train_test_split(X, y, test_size=self.val_fraction, stratify=y,
@@ -176,6 +184,7 @@ class PrefitStack(ClassifierMixin, BaseEstimator):
         return self
 
     def _member_proba(self, X):
+        """Matrix of each member's P(satisfied), the meta-model's input."""
         return np.column_stack([m.predict_proba(X)[:, 1] for _, m in self.members])
 
     def predict_proba(self, X):

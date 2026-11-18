@@ -44,6 +44,7 @@ def tune_task(member_key, idx, n_trials, folds):
     report_task(out, name, kind="tuning", member=member_key, done=0, total=n_trials, best=None)
 
     def progress(study, trial):
+        """Optuna callback: write live tuning progress for train_status.py."""
         done = len(study.trials)
         complete = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
         elapsed = time.time() - t0
@@ -61,12 +62,14 @@ def tune_task(member_key, idx, n_trials, folds):
 
 
 def t52_task(est_a, est_b, idx):
+    """Dietterich 5x2cv paired t-test between two models on the study subsample."""
     X, y = parallel.data()
     return paired_5x2cv(parallel.set_inner_jobs(clone(est_a)), parallel.set_inner_jobs(clone(est_b)),
                         X.iloc[idx].reset_index(drop=True), y[idx])
 
 
 def lc_task(name, est, idx):
+    """Learning curve of one model on the study subsample."""
     X, y = parallel.data()
     return learning_curve_df(name, parallel.set_inner_jobs(clone(est)), X.iloc[idx].reset_index(drop=True),
                              np.asarray(y[idx]))

@@ -5,7 +5,7 @@ import ui
 from ui import C
 
 ui.header("GATE 06 · INSIGHT", "Explain the models",
-          "What drives satisfaction for different passenger groups, and the ensemble distilled into "
+          "What drives satisfaction for different passenger groups, and the XGBoost model distilled into "
             "plain IF-THEN rules a manager can read.")
 
 
@@ -39,7 +39,7 @@ def simplify_rule(conds: list[str]) -> list[str]:
     return out
 
 
-tab_seg, tab_rules = st.tabs(["Segment drivers", "Rules extracted from the ensemble"])
+tab_seg, tab_rules = st.tabs(["Segment drivers", "Rules extracted from XGBoost"])
 
 with tab_seg:
     with st.spinner("Computing SHAP explanations for 6,000 hold-out passengers..."):
@@ -83,12 +83,12 @@ with tab_rules:
     s = sur[depth]
     k = st.columns(4)
     k[0].markdown(ui.kpi("Rules", str(s["n_rules"])), unsafe_allow_html=True)
-    k[1].markdown(ui.kpi("Fidelity to ensemble", f"{s['fidelity']*100:.1f}%", ui.ACCENT), unsafe_allow_html=True)
+    k[1].markdown(ui.kpi("Fidelity to XGBoost", f"{s['fidelity']*100:.1f}%", ui.ACCENT), unsafe_allow_html=True)
     k[2].markdown(ui.kpi("Accuracy vs truth", f"{s['accuracy']*100:.1f}%", ui.GOOD), unsafe_allow_html=True)
     k[3].markdown(ui.kpi("Hand-made rule", f"{ui.load_metrics()['models']['rule']['Accuracy']*100:.1f}%", ui.MUTED),
                   unsafe_allow_html=True)
-    ui.note("A shallow decision tree is trained to <b>imitate the team ensemble</b>. Fidelity = how often the rules agree "
-              "with the ensemble on hold-out passengers. Deeper = more faithful but harder to read.")
+    ui.note("A shallow decision tree is trained to <b>imitate the XGBoost model</b>. Fidelity = how often the rules agree "
+              "with XGBoost on hold-out passengers. Deeper = more faithful but harder to read.")
     html = ui.step_head(("Rule #", "min-width:2.4rem"), ("Condition", "flex:1"), ("Predicts", "width:8.5rem;text-align:center"),
                         ("Confidence", "width:7rem;text-align:right"),
                         ("Passengers covered", "width:9rem;text-align:right"))

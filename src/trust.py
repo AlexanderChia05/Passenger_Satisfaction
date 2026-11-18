@@ -29,23 +29,32 @@ class NeighbourOOD:
     feature space, converted to a percentile of calibration distances."""
 
     def __init__(self, transformer, k: int = 10):
+        """transformer = the KNN pipeline's preprocessing, so distances use scaled features."""
         self.transformer, self.k = transformer, k
 
     def fit(self, X_train, X_cal):
+        """Index the training passengers and record calibration-passenger distances as reference."""
         self.nn_ = NearestNeighbors(n_neighbors=self.k).fit(self.transformer.transform(X_train))
         self.cal_dist_ = np.sort(self.distance(X_cal))
         return self
 
     def distance(self, X):
+        """Mean distance to the k nearest training passengers (large = unusual passenger)."""
         d, _ = self.nn_.kneighbors(self.transformer.transform(X))
         return d.mean(axis=1)
 
     def percentile(self, X):
+        """Where a passenger's distance falls among calibration passengers (0-100)."""
         return np.searchsorted(self.cal_dist_, self.distance(X)) / len(self.cal_dist_) * 100
 
 
 # ---------------- data drift: population stability index ----------------
 def fit_reference(X: pd.DataFrame) -> dict:
+    """Reference histograms of the training data for the Population Stability Index.
+
+    Numeric columns use 10 quantile bins, ratings one bin per star, categories their
+    share; new data is later compared against these to detect drift.
+    """
     ref = {}
     for col in C.NUM_COLS + C.RATING_COLS:
         v = pd.to_numeric(X[col], errors="coerce").dropna()
@@ -81,7 +90,20 @@ def psi_table(ref: dict, X: pd.DataFrame) -> pd.DataFrame:
 
 # ---------------- surrogate rules ----------------
 def fit_surrogate(F: pd.DataFrame, teacher_pred: np.ndarray, depth: int) -> DecisionTreeClassifier:
+    """Shallow decision tree that imitates a teacher model's labels (global explanation)."""
     return DecisionTreeClassifier(max_depth=depth, min_samples_leaf=150, random_state=C.SEED).fit(F, teacher_pred)
+
+
+def build_surrogates(F_train, teacher, F_test, teacher_test, y_test, depths=range(2, 6)) -> dict:
+    """Shallow trees that imitate a teacher model's labels, one per depth, with hold-out fidelity / accuracy."""
+    out = {}
+    for depth in depths:
+        tree = fit_surrogate(F_train, teacher, depth)
+        pred = tree.predict(F_test)
+        out[depth] = {"tree": tree, "rules": extract_rules(tree, list(F_train.columns)),
+                      "fidelity": float((pred == teacher_test).mean()),
+                      "accuracy": float((pred == np.asarray(y_test)).mean()), "n_rules": int(tree.get_n_leaves())}
+    return out
 
 
 def _fmt_condition(feat: str, thr: float, left: bool) -> str:
@@ -105,10 +127,12 @@ def _fmt_condition(feat: str, thr: float, left: bool) -> str:
 
 
 def extract_rules(tree: DecisionTreeClassifier, feature_names) -> pd.DataFrame:
+    """Turn every root-to-leaf path of the surrogate tree into a readable IF ... THEN rule."""
     t = tree.tree_
     rows = []
 
     def walk(node, conds):
+        """Depth-first walk collecting the conditions on the path to each leaf."""
         if t.children_left[node] == -1:
             counts = t.value[node][0]
             share = counts / counts.sum()

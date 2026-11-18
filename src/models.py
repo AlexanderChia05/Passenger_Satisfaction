@@ -29,6 +29,7 @@ class RuleBaseline(ClassifierMixin, BaseEstimator):
     """
 
     def fit(self, X, y):
+        """Learn the satisfaction rate inside and outside the rule's group from training data."""
         hit = self._rule(X)
         y = np.asarray(y)
         self.p_yes_ = float(y[hit].mean())
@@ -38,18 +39,22 @@ class RuleBaseline(ClassifierMixin, BaseEstimator):
 
     @staticmethod
     def _rule(X):
+        """True for business travellers flying Business class (the strongest pair in the EDA)."""
         return ((X["Type of Travel"].astype(str) == "Business travel")
                 & (X["Class"].astype(str) == "Business")).to_numpy()
 
     def predict_proba(self, X):
+        """Group satisfaction rate as the probability, so probability metrics apply."""
         p = np.where(self._rule(X), self.p_yes_, self.p_no_)
         return np.column_stack([1 - p, p])
 
     def predict(self, X):
+        """Satisfied when the rule's group probability is at least 0.5."""
         return (self.predict_proba(X)[:, 1] >= 0.5).astype(int)
 
 
 def _scaled(model):
+    """Feature engineering + standard scaling + model (prototype models need scaled inputs)."""
     return Pipeline([("features", AirlineFeatures()), ("scale", StandardScaler()), ("model", model)])
 
 
@@ -82,6 +87,7 @@ MONOTONE = {**{c: 1 for c in C.RATING_COLS}, "service_mean": 1}
 
 
 def _xgb(monotone: bool = False, stage: str | None = None):
+    """Prototype XGBoost pipeline; `stage` masks information not yet known at that journey stage."""
     params = dict(n_estimators=300, learning_rate=0.1, max_depth=6, subsample=0.9,
                   colsample_bytree=0.9, eval_metric="logloss", random_state=C.SEED, n_jobs=-1)
     if monotone:

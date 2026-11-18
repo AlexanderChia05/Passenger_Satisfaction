@@ -70,6 +70,7 @@ FAMILY_COST = {"svm": 8, "SVM": 8, "Nystroem": 3, "mlp": 6, "MLP": 6, "knn": 5, 
 
 
 def _cost(name):
+    """Relative cost of a task, so the scheduler starts the slowest tasks first."""
     return max([v for k, v in FAMILY_COST.items() if k in name] or [1])
 
 
@@ -77,6 +78,9 @@ class Run:
     """Holds data, index subsets and experiment outputs (so steps can resume)."""
 
     def __init__(self, out, smoke):
+        """Load train/test data and fix the row subsets every step uses (same seed for all
+        members = equal, comparable budgets).
+        """
         self.out, self.exp = out, out / "experiments"
         self.exp.mkdir(parents=True, exist_ok=True)
         X, y = split_xy(load_raw("train"))
@@ -94,33 +98,41 @@ class Run:
               f"study {len(self.idx_study)} | CPU threads {THREADS} | pools {POOLS}")
 
     def _subsample(self, n):
+        """Stratified subsample of n training rows (keeps the class ratio)."""
         if n >= len(self.X):
             return self.idx_all
         idx, _ = train_test_split(self.idx_all, train_size=n, stratify=self.y, random_state=C.SEED)
         return np.sort(idx)
 
     def pool(self, kind, task_list):
+        """Run tasks in the process pool configured for this kind of work."""
         workers, inner = POOLS[kind]
         return parallel.run(task_list, min(workers, max(len(task_list), 1)), inner, self.X, self.y, self.out,
                             self.tracker, self.step)
 
     # ---- persistence helpers ----
     def path(self, name):
+        """Path of an experiment output file."""
         return self.exp / name
 
     def has(self, name):
+        """True if an output file exists (lets steps resume after an interruption)."""
         return self.path(name).exists()
 
     def save_df(self, df, name):
+        """Save a results table as CSV."""
         df.to_csv(self.path(name), index=False)
 
     def load_df(self, name):
+        """Load a results table."""
         return pd.read_csv(self.path(name))
 
     def save_json(self, obj, name):
+        """Save a JSON result."""
         self.path(name).write_text(json.dumps(obj, indent=2, default=float))
 
     def load_json(self, name):
+        """Load a JSON result."""
         return json.loads(self.path(name).read_text())
 
 
@@ -160,12 +172,16 @@ def run_cv_block(run, entries, idx, name, keep_oof=False):
 
 # ======================================================================= steps
 def step_baselines(run):
+    """Dummy (majority class) and business-rule baselines with the same K-fold CV,
+    so every model has a reference point to beat.
+    """
     run_cv_block(run, [("Dummy (majority)", "Baseline", "Baseline", DummyClassifier(strategy="most_frequent")),
                        ("Rule (business trip + Business class)", "Baseline", "Baseline", RuleBaseline())],
                  run.idx_all, "baselines", keep_oof=True)
 
 
 def step_partA(run):
+    """Part A: each member's single model and default ensemble, identical K-fold CV."""
     entries = []
     for m in MEMBERS:
         entries += [(f"{m.OWNER[-1]}. {m.BASE_NAME}", m.OWNER, "Part A - base", m.base()),
@@ -201,6 +217,7 @@ def step_missing(run):
 
 
 def _mi(X_, y_):
+    """Mutual information of each feature with the target (fixed seed)."""
     return mutual_info_classif(X_, y_, random_state=C.SEED)
 
 
@@ -223,6 +240,9 @@ def step_features(run):
 
 
 def step_tune(run, force):
+    """Part B tuning: Optuna (TPE + median pruning), equal budget for every member,
+    on the shared stratified tuning subsample. Already tuned members are skipped.
+    """
     params = run.load_json("tuned_params.json") if run.has("tuned_params.json") else {}
     trials = [run.load_df("tuning_trials.csv")] if run.has("tuning_trials.csv") else []
     todo = [m for m in MEMBERS if force or m.KEY not in params]
@@ -247,6 +267,7 @@ def step_tune(run, force):
 
 
 def tuned_params(run):
+    """Best parameters per member ({} = defaults if a member was not tuned)."""
     params = run.load_json("tuned_params.json") if run.has("tuned_params.json") else {}
     return {m.KEY: params.get(m.KEY, {}) for m in MEMBERS}
 
@@ -262,6 +283,9 @@ def step_final(run):
 
 
 def step_team(run):
+    """Combine different models: weighted soft vote and decision-tree stacking, both learned
+    from out-of-fold probabilities only (no leakage); the better one by F1 is kept.
+    """
     oof = pd.read_parquet(run.path("oof_final.parquet"))
     keys = [m.KEY for m in MEMBERS if m.KEY in oof]
     P, y = oof[keys].to_numpy(), oof["y_true"].to_numpy()
@@ -345,6 +369,9 @@ def step_holdout(run):
 
 
 def step_analysis(run):
+    """Statistical tests (McNemar, 5x2cv t-test, bootstrap CIs), learning curves,
+    robustness to noise / hidden ratings, and the fairness audit.
+    """
     models = joblib.load(run.out / "models.joblib")
     probs = pd.read_parquet(run.out / "test_predictions.parquet")
     y = run.y_test.to_numpy()
@@ -394,6 +421,9 @@ def step_analysis(run):
 
 
 def step_trust(run):
+    """Trust artifacts: out-of-distribution detector, surrogate rules (teacher = XGBoost),
+    monotonicity checks, saved to trust.joblib.
+    """
     models = joblib.load(run.out / "models.joblib")
     variants = load_variants(run.out)
     oof = pd.read_parquet(run.path("oof_final.parquet"))
@@ -409,15 +439,10 @@ def step_trust(run):
     t0 = time.perf_counter()
     feat = models["xgb"].named_steps["features"]
     F_train, F_test = feat.transform(run.X), feat.transform(run.X_test)
-    teacher = (cal["team"].to_numpy() >= 0.5).astype(int)
-    teacher_test = (models["team"].predict_proba(run.X_test)[:, 1] >= 0.5).astype(int)
-    surrogates = {}
-    for depth in range(2, 6):
-        tree = trust.fit_surrogate(F_train, teacher, depth)
-        pred = tree.predict(F_test)
-        surrogates[depth] = {"tree": tree, "rules": trust.extract_rules(tree, list(F_train.columns)),
-                             "fidelity": float((pred == teacher_test).mean()),
-                             "accuracy": float((pred == run.y_test.to_numpy()).mean()), "n_rules": int(tree.get_n_leaves())}
+    # the rules imitate the app's headline model (XGBoost), using its out-of-fold labels on the training set
+    teacher = (cal["xgb"].to_numpy() >= 0.5).astype(int)
+    teacher_test = (models["xgb"].predict_proba(run.X_test)[:, 1] >= 0.5).astype(int)
+    surrogates = trust.build_surrogates(F_train, teacher, F_test, teacher_test, run.y_test)
     run.tracker.task_done(run.step, "surrogate rules", time.perf_counter() - t0)
 
     t0 = time.perf_counter()
@@ -434,6 +459,7 @@ def step_trust(run):
 
 # ======================================================================= main
 def main():
+    """Command-line entry: run the selected steps in order with a live progress tracker."""
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--steps", nargs="+", choices=STEPS, default=STEPS)
     ap.add_argument("--force", action="store_true", help="redo tuning even if tuned params exist")

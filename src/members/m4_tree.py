@@ -20,11 +20,23 @@ BASE_NAME, ENSEMBLE_NAME = "Decision Tree", "XGBoost"
 
 
 def base():
+    """Part A single model: one unpruned decision tree.
+
+    It grows until leaves are pure, so it memorises training data (high variance) and gives
+    almost only 0/1 probabilities, which is why its ROC-AUC is low.
+    """
     return unscaled(DecisionTreeClassifier(random_state=SEED))
 
 
 def ensemble(learning_rate=0.1, max_depth=6, subsample=0.9, colsample_bytree=0.9, reg_lambda=1.0,
              min_child_weight=1, gamma=0.0, monotone=False):
+    """XGBoost (gradient boosting) with early stopping.
+
+    Why: trees are added one after another, each fitting the errors of the previous ones,
+    which reduces bias; shrinkage (learning_rate), row/column subsampling, L2
+    (reg_lambda), min_child_weight and gamma control variance. monotone=True forces
+    P(satisfied) to never fall when a service rating rises.
+    """
     return unscaled(XGBEarlyStop(learning_rate=learning_rate, max_depth=max_depth, subsample=subsample,
                                  colsample_bytree=colsample_bytree, reg_lambda=reg_lambda,
                                  min_child_weight=min_child_weight, gamma=gamma,
@@ -33,6 +45,9 @@ def ensemble(learning_rate=0.1, max_depth=6, subsample=0.9, colsample_bytree=0.9
 
 
 def space(trial):
+    """Optuna search space for the boosting regularisation knobs (depth, learning rate,
+    subsampling, L2, minimum leaf weight, split gain threshold).
+    """
     return dict(
         learning_rate=trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
         max_depth=trial.suggest_int("max_depth", 3, 10),

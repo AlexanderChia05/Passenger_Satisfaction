@@ -16,6 +16,10 @@ BASE_NAME, ENSEMBLE_NAME = "MLP", "Seed-bagged MLP"
 
 
 def _net(layers=(64, 32), activation="relu", alpha=1e-4, lr=1e-3, batch=256, seed=SEED):
+    """One multi-layer perceptron with early stopping (10% validation, 10 epochs patience).
+
+    Early stopping is the main guard against over-fitting; alpha adds L2 regularisation.
+    """
     return MLPClassifier(hidden_layer_sizes=layers, activation=activation, alpha=alpha,
                          learning_rate_init=lr, batch_size=batch, early_stopping=True,
                          validation_fraction=0.1, n_iter_no_change=10, max_iter=300, random_state=seed)
@@ -23,20 +27,34 @@ def _net(layers=(64, 32), activation="relu", alpha=1e-4, lr=1e-3, batch=256, see
 
 def _layers(n_layers, width, shrink):
     # shrink=True halves the width at each deeper layer (funnel), else constant width
+    """Hidden layer sizes. shrink=True halves the width at each deeper layer (a funnel that
+    compresses features step by step), otherwise all layers have the same width.
+    """
     return tuple(max(8, width // (2 ** i)) if shrink else width for i in range(n_layers))
 
 
 def base():
+    """Part A single model: one MLP (64 -> 32, ReLU) on standardised features."""
     return scaled(_net())
 
 
 def ensemble(n_layers=2, width=64, shrink=True, activation="relu", alpha=1e-4, lr=1e-3, batch=256, n_members=5):
+    """Seed-bagged MLP: the same architecture trained n_members times with different random
+    seeds, probabilities averaged (soft vote).
+
+    Why: a single network's result depends on its random initial weights. Averaging
+    several seeds cancels that randomness, so predictions are more stable (lower variance)
+    and probabilities better calibrated.
+    """
     layers = _layers(n_layers, width, shrink)
     nets = [(f"net{s}", _net(layers, activation, alpha, lr, batch, seed=s)) for s in range(n_members)]
     return scaled(VotingClassifier(nets, voting="soft", n_jobs=inner_jobs()))
 
 
 def space(trial):
+    """Optuna search space: depth, width, funnel shape, activation, L2 strength, learning
+    rate, batch size and ensemble size (architecture search).
+    """
     return dict(
         n_layers=trial.suggest_int("n_layers", 1, 3),
         width=trial.suggest_categorical("width", [32, 64, 128, 256]),

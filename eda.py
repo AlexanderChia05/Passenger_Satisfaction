@@ -43,22 +43,26 @@ plt.rcParams.update({
 
 
 def save(fig, name):
+    """Save a figure into reports/eda at a fixed resolution and close it."""
     fig.savefig(OUT / name, dpi=160, bbox_inches="tight")
     plt.close(fig)
     return name
 
 
 def pct(x, d=1):
+    """Format a share as a percentage string."""
     return f"{x * 100:.{d}f}%"
 
 
 def load():
+    """Load the raw train and test CSVs."""
     tr = pd.read_csv(C.DATA_RAW / "train.csv")
     te = pd.read_csv(C.DATA_RAW / "test.csv")
     return tr, te
 
 
 def main():
+    """Run every EDA checklist item, saving the charts and tables into reports/eda."""
     OUT.mkdir(parents=True, exist_ok=True)
     raw_tr, raw_te = load()
     tr = raw_tr.drop(columns=[c for c in C.DROP_COLS if c in raw_tr.columns])
@@ -333,6 +337,7 @@ def main():
 
 
 def write_summary(F, figs):
+    """Write eda_summary.md: checklist, computed findings and findings -> decisions table."""
     d, z, cr = F["desc"], F["zeros"], F["cat_rates"]
     tp = "\n".join(f"| {a} | {b} | {v:+.2f} |" for (a, b), v in F["top_pairs"].items())
     mi_top = ", ".join(f"{k} ({v:.3f})" for k, v in F["mi"].head(5).items())

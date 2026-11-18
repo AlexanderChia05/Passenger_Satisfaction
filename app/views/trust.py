@@ -16,7 +16,7 @@ test = ui.load_test_predictions()
 y = test["y_true"].to_numpy()
 trust = ui.load_trust()
 cal = trust["cal"]
-keys = ["team"] + ui.MEMBER_MODELS
+keys = ui.MEMBER_MODELS
 
 tab_conf, tab_fair, tab_mono, tab_stage = st.tabs(
     ["Conformal uncertainty", "Fairness audit", "Monotonic constraints", "Early-warning accuracy"])
@@ -104,7 +104,7 @@ with tab_mono:
     st.markdown("**Rule:** a better service rating should never make a passenger *less* likely to be satisfied. "
                   "We test it by adding +1 star to each service for 1,500 hold-out passengers.")
     mdf = pd.DataFrame([{"model": ui.mname(k), "key": k, "violations": v, "accuracy": m.get(k, {}).get("Accuracy", np.nan)}
-                        for k, v in mono.items()])
+                        for k, v in mono.items() if k != "team"])
     a, b = st.columns(2)
     vbase = alt.Chart(mdf).encode(y=alt.Y("model:N", sort="-x", title=None))
     vbars = vbase.mark_bar(cornerRadiusEnd=3, height=18).encode(

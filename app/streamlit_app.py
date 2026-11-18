@@ -10,7 +10,7 @@ import ui  # noqa: E402
 
 # Streamlit drops widget state for widgets not on the current page; re-assigning
 # the passenger keys keeps the same passenger across pages.
-for k in [k for k in st.session_state if str(k).startswith("p_") or k == "stage"]:
+for k in [k for k in st.session_state if str(k).startswith("p_")]:
     st.session_state[k] = st.session_state[k]
 
 ui.setup_page()
@@ -30,7 +30,8 @@ with st.sidebar:
                 '<h1 style="font-size:2rem">SkyPulse</h1></div></div>', unsafe_allow_html=True)
 
 pages = [
-    st.Page("views/predict.py", title="Predict passenger", icon="✈️", default=True),
+    st.Page("views/overview.py", title="Project overview", icon="🗺️", default=True),
+    st.Page("views/predict.py", title="Predict passenger", icon="✈️"),
     st.Page("views/simulator.py", title="Service simulator", icon="🎚️"),
     st.Page("views/planner.py", title="Budget planner", icon="💰"),
     st.Page("views/policy.py", title="Decision policy", icon="⚖️"),
@@ -39,11 +40,17 @@ pages = [
     st.Page("views/scoreboard.py", title="Model scoreboard", icon="🏁"),
     st.Page("views/lab.py", title="Experiment lab", icon="🧪"),
 ]
-st.navigation(pages).run()
+try:
+    st.navigation(pages).run()
+except Exception as exc:  # st.stop / st.rerun are BaseException subclasses, so they still pass through
+    st.error(f"This page hit an unexpected error: {type(exc).__name__}: {exc}. "
+             "The other pages still work; please report the details below.")
+    with st.expander("Technical details"):
+        st.exception(exc)
 
 with st.sidebar:
     if full:
-        st.caption("Tuned models trained on {n:,} passengers · team = {team} · scored on {m:,} hold-out passengers.".format(n=m["trained_on_rows"], team=m.get("team", "-"), m=m["test_rows"]))
+        st.caption("Tuned models trained on {n:,} passengers · scored on {m:,} hold-out passengers.".format(n=m["trained_on_rows"], m=m["test_rows"]))
     else:
         st.caption(("Prototype models: untuned, trained on {n:,} rows · scored on {m:,} hold-out passengers. "
                      "Run `python train_full.py` for the full system.").format(n=m["trained_on_rows"], m=m["test_rows"]))

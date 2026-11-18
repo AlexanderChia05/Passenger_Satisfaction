@@ -25,7 +25,7 @@ group = group.sample(min(n, len(group)), random_state=C.SEED)[C.FEATURE_COLS]
 
 b1, b2, b3 = st.columns([1.2, 1, 1])
 budget = b1.number_input("Budget (RM)", 1_000, 1_000_000, 50_000, 5_000)
-engine = b2.radio("Scoring model", ["XGBoost (fast)", "Team ensemble (slow)"])
+engine = b2.radio("Scoring model", ["XGBoost (fast)", "MLP ensemble (slower)"])
 locked = b3.multiselect("Cannot change", C.RATING_COLS,
                         default=["Gate location", "Departure/Arrival time convenient"])
 with st.expander("Upgrade cost per passenger, per +1 star (RM)"):
@@ -40,14 +40,19 @@ if engine.startswith("XGBoost"):
     model = ui.load_models()["xgb"]
     predict_fn = lambda d: model.predict_proba(d)[:, 1]  # noqa: E731
 else:
-    predict_fn = lambda d: ui.predict(d)["team"].to_numpy()  # noqa: E731
+    mlp = ui.load_models()["mlp"]
+    predict_fn = lambda d: mlp.predict_proba(d)[:, 1]  # noqa: E731
 
 # results belong to the inputs they were computed for; changing any input hides the old plan
 plan_sig = (tuple(cls), tuple(trip), tuple(cust), n, budget, engine, tuple(locked), tuple(sorted(costs.items())))
 if st.button("Run planner", type="primary", key="run_planner"):
     with st.spinner("Evaluating every service upgrade at each step..."):
         before = predict_fn(group)
-        steps, after = plan_budget(predict_fn, group, costs, budget, locked)
+        try:
+            steps, after = plan_budget(predict_fn, group, costs, budget, locked)
+        except Exception as exc:  # e.g. every service locked, or a model failure
+            st.error(f"The planner could not finish: {type(exc).__name__}: {exc}")
+            st.stop()
     st.session_state["plan"] = (steps, float((before >= .5).mean()), float((after >= .5).mean()), len(group))
     st.session_state["plan_sig"] = plan_sig
 

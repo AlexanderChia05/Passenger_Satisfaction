@@ -1,5 +1,5 @@
-"""Recompute the metric tables that need all six headline metrics from saved artifacts,
-without retraining: stage_metrics.csv, stat_bootstrap.csv and trust.joblib's copy of stage metrics.
+"""Recompute derived tables from saved artifacts, without retraining: stage_metrics.csv,
+stat_bootstrap.csv, and trust.joblib's stage metrics and surrogate rules (teacher = XGBoost).
 
     python refresh_metrics.py [--out artifacts/full]
 """
@@ -12,11 +12,13 @@ import pandas as pd
 from src import config as C
 from src.evaluation import DISPLAY_METRICS, bootstrap_cis, metrics_from_proba
 from src.features import load_raw, split_xy
+from src.trust import build_surrogates
 from src.members import MEMBERS
 from src.store import load_variants
 
 
 def main():
+    """Rebuild stage metrics, bootstrap CIs and surrogate rules from saved models."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(C.ARTIFACTS_FULL))
     out = Path(ap.parse_args().out)
@@ -48,6 +50,14 @@ def main():
     if trust_path.exists():
         trust = joblib.load(trust_path)
         trust["stage_metrics"] = stage
+        models = joblib.load(out / "models.joblib")
+        feat = models["xgb"].named_steps["features"]
+        X_train, y_train = split_xy(load_raw("train"))
+        teacher = (trust["cal"]["xgb"].to_numpy() >= 0.5).astype(int)
+        teacher_test = (probs["xgb"].to_numpy() >= 0.5).astype(int)
+        trust["surrogates"] = build_surrogates(feat.transform(X_train), teacher, feat.transform(X_test),
+                                               teacher_test, y_test)
+        print("surrogates:", {d: round(s["fidelity"], 4) for d, s in trust["surrogates"].items()})
         joblib.dump(trust, trust_path, compress=("xz", 9))
         print("trust.joblib stage_metrics updated")
 

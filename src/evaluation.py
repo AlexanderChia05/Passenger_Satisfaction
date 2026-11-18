@@ -17,6 +17,12 @@ DISPLAY_METRICS = ["Accuracy", "Recall", "Precision", "F1", "ROC-AUC", "MCC"]
 
 
 def metrics_from_proba(y, p, threshold=0.5) -> dict:
+    """All classification metrics from true labels and P(satisfied).
+
+    Threshold metrics (Accuracy, Precision, Recall, F1, MCC) use p >= threshold;
+    ranking / probability metrics (ROC-AUC, PR-AUC, Brier, LogLoss) use p directly.
+    MCC is included because it stays honest under the 57/43 class imbalance.
+    """
     y, p = np.asarray(y), np.clip(np.asarray(p, dtype=float), 1e-6, 1 - 1e-6)
     pred = (p >= threshold).astype(int)
     two_classes = len(np.unique(y)) > 1
@@ -34,6 +40,9 @@ def metrics_from_proba(y, p, threshold=0.5) -> dict:
 
 
 def make_cv(n_splits=None, seed=C.SEED):
+    """Stratified K-fold with a fixed seed: every fold keeps the 43% satisfied share and every
+    model is compared on identical splits.
+    """
     return StratifiedKFold(n_splits or C.EXP["cv_folds"], shuffle=True, random_state=seed)
 
 
@@ -99,6 +108,7 @@ def paired_5x2cv(model_a, model_b, X, y, scorer=f1_score, seed=C.SEED) -> dict:
 
 
 def bootstrap_ci(y, p, metric="F1", n=1000, seed=C.SEED) -> tuple[float, float]:
+    """95% bootstrap confidence interval of one metric (percentile method)."""
     rng = np.random.default_rng(seed)
     y, p = np.asarray(y), np.asarray(p)
     vals = [metrics_from_proba(y[idx], p[idx])[metric] for idx in (rng.integers(0, len(y), len(y)) for _ in range(n))]
@@ -117,6 +127,7 @@ def bootstrap_cis(y, p, metrics=None, n=1000, seed=C.SEED) -> dict[str, tuple[fl
 
 # ---------------- diagnostics ----------------
 def learning_curve_df(name, model, X, y, folds=3) -> pd.DataFrame:
+    """Train/validation F1 at 10-100% of the data (3-fold CV) to diagnose bias vs variance."""
     sizes, tr, va = learning_curve(model, X, y, train_sizes=[0.1, 0.25, 0.5, 0.75, 1.0], cv=make_cv(folds),
                                    scoring="f1", n_jobs=1, shuffle=True, random_state=C.SEED)
     return pd.DataFrame({"model": name, "train_size": sizes, "train_f1": tr.mean(axis=1), "train_std": tr.std(axis=1),

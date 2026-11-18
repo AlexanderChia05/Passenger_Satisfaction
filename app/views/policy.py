@@ -14,7 +14,7 @@ preds = ui.load_test_predictions()
 y = preds["y_true"].to_numpy()
 
 c1, c2, c3 = st.columns(3)
-model = c1.selectbox("Model", ["team"] + ui.MEMBER_MODELS + ["rule"], format_func=ui.mname)
+model = c1.selectbox("Model", ui.MEMBER_MODELS + ["rule"], format_func=ui.mname)
 voucher = c2.number_input("Voucher cost per flagged passenger (RM)", 0, 1000, 50, 10)
 churn = c3.number_input("Cost of a missed unhappy passenger (RM)", 0, 5000, 300, 50)
 

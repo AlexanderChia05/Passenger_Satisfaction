@@ -3,32 +3,34 @@ import pandas as pd
 import streamlit as st
 from sklearn.metrics import precision_recall_curve, roc_curve
 
+import error_analysis
 import ui
 from ui import C
 
 meta = ui.load_metrics()
 ui.header("GATE 07 · RESULTS", "Model scoreboard",
-          "Hold-out performance of every model versus the two baselines, head-to-head model duels, and the feedback log."
+          "Hold-out performance of every model versus the two baselines, error analysis, head-to-head model duels, "
+          "and the feedback log."
           + " " + ("Tuned models trained on the full training set." if meta.get("mode") == "full"
                    else "Prototype numbers: untuned models trained on a 20k-row subsample."))
 
 m = meta["models"]
 preds = ui.load_test_predictions()
 y = preds["y_true"].to_numpy()
-tab_over, tab_duel, tab_fb = st.tabs(["Overview", "Model duel", "Feedback log"])
+tab_over, tab_err, tab_duel, tab_fb = st.tabs(["Overview", "Error analysis", "Model duel", "Feedback log"])
 
 with tab_over:
-    order = ["team"] + ui.MEMBER_MODELS + ["xgb_mono"] + ui.BASELINES
+    order = ui.MEMBER_MODELS + ["xgb_mono"] + ui.BASELINES
     metric_cols = ui.METRICS
     rows = [{"Model": ui.mname(k), "Owner": ui.MODEL_INFO[k]["role"],
              **{c: m[k].get(c) for c in metric_cols}, "Fit (s)": m[k].get("fit_seconds")}
             for k in order if k in m]
     raw = pd.DataFrame(rows)
-    # pre-formatted text: the Streamlit grid shows nulls as "None" whatever na_rep says (team = no single fit)
+    # pre-formatted text: the Streamlit grid shows nulls as "None" whatever na_rep says (e.g. models without a recorded fit time)
     raw["Fit (s)"] = pd.to_numeric(raw["Fit (s)"], errors="coerce").map(lambda v: f"{v:.1f}" if pd.notna(v) else "-")
     table = raw
 
-    best = max(ui.MEMBER_MODELS + ["team"], key=lambda k: m[k]["F1"])
+    best = max(ui.MEMBER_MODELS, key=lambda k: m[k]["F1"])
     k = st.columns(4)
     k[0].markdown(ui.kpi("Best model (F1)", ui.mname(best), ui.ACCENT), unsafe_allow_html=True)
     k[1].markdown(ui.kpi("Best accuracy", f"{m[best]['Accuracy']*100:.2f}%", ui.GOOD), unsafe_allow_html=True)
@@ -44,7 +46,7 @@ with tab_over:
                  hide_index=True, width="stretch")
     st.caption("Recall: share of satisfied passengers found. Precision: share of predicted-satisfied that truly are. MCC: robust to class imbalance.")
 
-    curve_keys = ["team"] + ui.MEMBER_MODELS + ["rule"]
+    curve_keys = ui.MEMBER_MODELS + ["rule"]
     roc_rows, pr_rows = [], []
     for key in curve_keys:
         fpr, tpr, _ = roc_curve(y, preds[key])
@@ -64,8 +66,11 @@ with tab_over:
                 color=alt.Color("model:N", scale=ui.color_scale(curve_keys), legend=ui.bottom_legend(3)))
             st.altair_chart(ui.themed(ch.properties(height=300)), width="stretch")
 
+with tab_err:
+    error_analysis.render()
+
 with tab_duel:
-    duel_keys = [k for k in ui.MEMBER_MODELS + ["team", "xgb_mono", "rule"] if k in preds]
+    duel_keys = [k for k in ui.MEMBER_MODELS + ["xgb_mono", "rule"] if k in preds]
     a, b = st.columns(2)
     m1 = a.selectbox("Model A", duel_keys, index=0, format_func=ui.mname)
     m2 = b.selectbox("Model B", duel_keys, index=3, format_func=ui.mname)

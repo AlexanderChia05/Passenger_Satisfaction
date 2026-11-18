@@ -14,11 +14,23 @@ BASE_NAME, ENSEMBLE_NAME = "KNN", "Bagging-KNN"
 
 
 def base():
+    """Part A single model: KNN on standardised features (k=15, closer neighbours weigh more).
+
+    Scaling is essential because KNN compares raw distances: without it, Flight Distance
+    (0-5,000) would drown out the 0-5 service ratings.
+    """
     return scaled(KNeighborsClassifier(n_neighbors=15, weights="distance"))
 
 
 def ensemble(n_neighbors=15, weights="distance", p=2, n_estimators=10, max_samples=0.8,
              max_features=0.7, use_nca=False, nca_components=12):
+    """Bagging-KNN: n_estimators KNNs, each on a random share of rows (max_samples) AND of
+    features (max_features, the 'random subspace' method).
+
+    Why: a single KNN treats every feature equally, so noisy features mislead the distance.
+    Each bagged KNN sees a different feature subset, so their averaged vote dilutes noise
+    (variance reduction). Optional NCA first learns a better distance metric.
+    """
     knn = KNeighborsClassifier(n_neighbors=n_neighbors, weights=weights, p=p)
     bag = BaggingClassifier(knn, n_estimators=n_estimators, max_samples=max_samples,
                             max_features=max_features, random_state=SEED, n_jobs=inner_jobs())
@@ -27,6 +39,10 @@ def ensemble(n_neighbors=15, weights="distance", p=2, n_estimators=10, max_sampl
 
 
 def space(trial):
+    """Optuna search space. Odd k avoids ties in the binary vote; p=1 (Manhattan) vs p=2
+    (Euclidean) tests which distance suits mixed ordinal/numeric data; NCA is searched as an
+    on/off switch so tuning itself decides whether metric learning pays off.
+    """
     params = dict(
         n_neighbors=trial.suggest_int("n_neighbors", 3, 61, step=2),
         weights=trial.suggest_categorical("weights", ["uniform", "distance"]),

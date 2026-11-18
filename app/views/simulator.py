@@ -13,7 +13,7 @@ ui.header("GATE 02 · WHAT-IF", "Service improvement simulator",
 X = ui.current_passenger()
 base = ui.predict(X).iloc[0]
 p = X.iloc[0]
-ui.note("Passenger from <b>Predict</b>: {age}y · {cabin} · {trip} · {cust} · team P(satisfied) <b class=\"mono\">{p:.3f}</b>".format(age=p["Age"], cabin=C.CABIN_NAMES[p["Class"]], trip=p["Type of Travel"], cust=p["Customer Type"], p=base["team"]))
+ui.note("Passenger from <b>Predict</b>: {age}y · {cabin} · {trip} · {cust} · XGBoost P(satisfied) <b class=\"mono\">{p:.3f}</b>".format(age=p["Age"], cabin=C.CABIN_NAMES[p["Class"]], trip=p["Type of Travel"], cust=p["Customer Type"], p=base[ui.HEADLINE]))
 
 tab_curve, tab_cf, tab_lift = st.tabs(["Sensitivity curve", "Cheapest path to satisfied", "Biggest single lever"])
 
@@ -24,7 +24,7 @@ with tab_curve:
                          help="Variant trained with the constraint 'more stars can never lower P(satisfied)'.")
     grid = pd.concat([X.assign(**{service: r}) for r in range(1, 6)], ignore_index=True)
     probs = ui.predict(grid)
-    keys = ui.MEMBER_MODELS + ["team"]
+    keys = ui.MEMBER_MODELS
     if show_mono:
         probs["xgb_mono"] = ui.load_variants()["xgb_mono"].predict_proba(grid)[:, 1]
         keys = keys + ["xgb_mono"]
@@ -49,7 +49,7 @@ with tab_curve:
 with tab_cf:
     c1, c2, c3 = st.columns(3)
     budget = c1.slider("Max rating upgrades (+1 star each)", 1, 15, 6)
-    target = c2.slider("Target team P(satisfied)", 0.5, 0.95, 0.6, 0.05)
+    target = c2.slider("Target XGBoost P(satisfied)", 0.5, 0.95, 0.6, 0.05)
     objective = c3.radio("Optimise for", ["Lowest cost", "Fewest upgrades"], horizontal=True)
     locked = st.multiselect("Services the airline cannot change", C.RATING_COLS,
                             default=["Gate location", "Departure/Arrival time convenient"])
@@ -61,8 +61,12 @@ with tab_cf:
                   for s, v in zip(DEFAULT_COSTS, edited["cost (RM)"])}
     costs = real_costs if objective == "Lowest cost" else {s: 1 for s in C.RATING_COLS}
 
-    steps, p_now = counterfactual(lambda d: ui.predict(d)["team"].to_numpy(), X, costs, locked, target, budget)
-    if float(base["team"]) >= target:
+    try:
+        steps, p_now = counterfactual(ui.p_headline, X, costs, locked, target, budget)
+    except Exception as exc:  # search failure must not blank the whole simulator
+        st.error(f"The upgrade search failed: {type(exc).__name__}: {exc}")
+        st.stop()
+    if float(base[ui.HEADLINE]) >= target:
         ui.note("Passenger already meets the target - no recovery needed.")
     elif not steps:
         ui.note("No upgrade improves this passenger. The drivers are outside service control (e.g. trip type, delay).",
@@ -71,7 +75,7 @@ with tab_cf:
         reached = p_now >= target
         total = sum(real_costs.get(s, 0) for s, *_ in steps)
         ui.note(("Target reached" if reached else "Target not reached")
-                + " in <b>{n}</b> upgrade(s) costing <b>RM {c:,.0f}</b>: P(satisfied) {a:.3f} → <b>{b:.3f}</b>".format(n=len(steps), c=total, a=base["team"], b=p_now), warn=not reached)
+                + " in <b>{n}</b> upgrade(s) costing <b>RM {c:,.0f}</b>: P(satisfied) {a:.3f} → <b>{b:.3f}</b>".format(n=len(steps), c=total, a=base[ui.HEADLINE], b=p_now), warn=not reached)
         html = ui.step_head(("Step", "min-width:2.4rem"), ("Service", "flex:1"), ("Rating", "width:9rem;text-align:right"),
                             ("Cost", "width:6rem;text-align:right"),
                             ("P(satisfied)", "width:9rem;text-align:right"))
@@ -84,10 +88,10 @@ with tab_cf:
 
 with tab_lift:
     rows = [X.assign(**{s: min(int(p[s]) + 1, 5)}) for s in C.RATING_COLS]
-    lift = ui.predict(pd.concat(rows, ignore_index=True))["team"].to_numpy() - base["team"]
+    lift = ui.predict(pd.concat(rows, ignore_index=True))[ui.HEADLINE].to_numpy() - base[ui.HEADLINE]
     df = pd.DataFrame({"service": [s for s in C.RATING_COLS], "lift": lift}).sort_values("lift", ascending=False)
     bars = alt.Chart(df).mark_bar(cornerRadiusEnd=3, height=16).encode(
-        x=alt.X("lift:Q", title="Change in team P(satisfied) from +1 star", axis=alt.Axis(format="+.2f")),
+        x=alt.X("lift:Q", title="Change in XGBoost P(satisfied) from +1 star", axis=alt.Axis(format="+.2f")),
         y=alt.Y("service:N", sort=None, title=None),
         color=alt.condition("datum.lift > 0", alt.value(ui.GOOD), alt.value(ui.BAD)),
         tooltip=["service", alt.Tooltip("lift:Q", format="+.4f")]).properties(height=420)

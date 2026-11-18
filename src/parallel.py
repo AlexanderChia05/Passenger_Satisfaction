@@ -16,6 +16,9 @@ _DATA = {}
 
 
 def _init(inner_jobs, X, y, out):
+    """Worker start-up: cap BLAS/OpenMP threads (avoids oversubscribing the CPU) and keep the
+    training data in the worker so it is not re-sent with every task.
+    """
     os.environ["SKYPULSE_INNER_JOBS"] = str(inner_jobs)
     for var in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
         os.environ[var] = str(inner_jobs)
@@ -25,10 +28,12 @@ def _init(inner_jobs, X, y, out):
 
 
 def data():
+    """Training features and labels held by this worker process."""
     return _DATA["X"], _DATA["y"]
 
 
 def out_dir():
+    """Experiment output folder of the current run."""
     return _DATA["out"]
 
 
@@ -64,5 +69,6 @@ def run(tasks, workers, inner_jobs, X, y, out, tracker=None, step=None):
 
 
 def _timed(fn, *args):
+    """Run fn and return (result, seconds)."""
     t0 = time.perf_counter()
     return fn(*args), time.perf_counter() - t0

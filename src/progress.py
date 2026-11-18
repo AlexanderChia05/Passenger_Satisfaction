@@ -12,12 +12,14 @@ from pathlib import Path
 
 
 def _write(path: Path, obj: dict):
+    """Atomically write the progress JSON (write to a temp file, then rename)."""
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(obj, indent=1, default=str), encoding="utf-8")
     os.replace(tmp, path)  # atomic: readers never see a half-written file
 
 
 def fmt_secs(s) -> str:
+    """Seconds as a short '1h 02m' / '3m 05s' string."""
     if s is None:
         return "-"
     s = int(max(s, 0))
@@ -26,7 +28,9 @@ def fmt_secs(s) -> str:
 
 
 class Tracker:
+    """Live progress of the training pipeline (steps, tasks, ETA) for train_status.py and the app."""
     def __init__(self, out: Path, steps: list[str], estimates: dict[str, float]):
+        """Create the tracker for the given ordered steps."""
         self.dir = out / "progress"
         (self.dir / "tasks").mkdir(parents=True, exist_ok=True)
         for f in (self.dir / "tasks").glob("*.json"):
@@ -38,6 +42,7 @@ class Tracker:
 
     # ---- step level ----
     def start_step(self, step, n_tasks=0):
+        """Mark a step as running."""
         st = self.state["steps"][step]
         st.update(status="running", start=time.time(), tasks_total=n_tasks, tasks_done=0, tasks_failed=0)
         self.state["current"] = step
@@ -45,10 +50,12 @@ class Tracker:
         self._save()
 
     def add_tasks(self, step, n):
+        """Add tasks to a step's total."""
         self.state["steps"][step]["tasks_total"] += n
         self._save()
 
     def task_done(self, step, name, seconds, failed=False):
+        """Record one finished task and its duration (used for the ETA)."""
         st = self.state["steps"][step]
         st["tasks_done"] += 1
         st["tasks_failed"] += int(failed)
@@ -57,18 +64,21 @@ class Tracker:
         self._save()
 
     def end_step(self, step, failed=False):
+        """Mark a step as finished."""
         st = self.state["steps"][step]
         st.update(status="failed" if failed else "done", end=time.time())
         self.log(f"END {step} in {fmt_secs(st['end'] - st['start'])}")
         self._save()
 
     def finish(self, status="done"):
+        """Mark the whole run as finished."""
         self.state.update(status=status, finished=time.time(), current=None)
         self.log(f"RUN {status.upper()} in {fmt_secs(self.state['finished'] - self.state['started'])}")
         self._save()
 
     # ---- ETA ----
     def step_eta(self, step):
+        """Estimated seconds left in a step from the mean task time so far."""
         st = self.state["steps"][step]
         if not st["start"]:
             return st["estimate_s"]
@@ -78,6 +88,7 @@ class Tracker:
         return max((st["estimate_s"] or 0) - elapsed, 0)
 
     def overall_eta(self):
+        """Estimated seconds left for the whole run."""
         total = 0.0
         for name, st in self.state["steps"].items():
             if st["status"] == "running":
@@ -88,12 +99,14 @@ class Tracker:
 
     # ---- io ----
     def log(self, msg):
+        """Append a timestamped message to the run log."""
         line = f"{time.strftime('%H:%M:%S')} {msg}"
         print(line, flush=True)
         with open(self.dir / "train.log", "a", encoding="utf-8") as f:
             f.write(line + "\n")
 
     def _save(self):
+        """Persist the tracker state."""
         self.state["updated"] = time.time()
         self.state["eta_s"] = self.overall_eta()
         _write(self.dir / "overall.json", self.state)
@@ -105,6 +118,7 @@ def report_task(out: Path, name: str, **info):
 
 
 def clear_task(out: Path, name: str):
+    """Remove a finished task's live-progress file."""
     p = out / "progress" / "tasks" / f"{name}.json"
     if p.exists():
         p.unlink()

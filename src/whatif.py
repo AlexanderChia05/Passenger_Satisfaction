@@ -22,6 +22,10 @@ def counterfactual(predict_fn, X: pd.DataFrame, costs: dict, locked=(), target=0
     with the best probability gain per RM. Returns (steps, final_p) where each
     step = (service, from, to, cost, p_before, p_after).
     """
+    if len(X) != 1:
+        raise ValueError(f"counterfactual explains one passenger, got {len(X)} rows")
+    if not 0 < target < 1:
+        raise ValueError(f"target probability must be between 0 and 1, got {target}")
     cur = X.copy().reset_index(drop=True)
     p_now = float(predict_fn(cur)[0])
     steps = []
@@ -51,6 +55,10 @@ def plan_budget(predict_fn, X: pd.DataFrame, costs: dict, budget: float, locked=
 
     Returns (steps DataFrame, final probabilities).
     """
+    if X.empty:
+        raise ValueError("no passengers to plan for")
+    if budget < 0 or any(v < 0 for v in costs.values()):
+        raise ValueError("budget and upgrade costs must not be negative")
     cur = X.copy().reset_index(drop=True)
     p = predict_fn(cur)
     spent, rows = 0.0, []

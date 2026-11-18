@@ -15,6 +15,7 @@ if str(ROOT) not in sys.path:
 
 from src import config as C  # noqa: E402
 from src.features import FEATURE_LABELS  # noqa: E402
+from src.features import validate_frame  # noqa: E402
 from src.models import BASELINES, MEMBER_MODELS, MODEL_INFO, predict_all  # noqa: E402
 from src.evaluation import DISPLAY_METRICS as METRICS  # noqa: E402,F401
 
@@ -33,7 +34,7 @@ EXP_DIR = ART / "experiments"
 
 GOOD, BAD, ACCENT, MUTED = "#3ddc97", "#ff5d5d", "#ffb627", "#8a9bb4"
 MODEL_COLORS = {"knn": "#5ab0ff", "svm": "#c792ea", "mlp": "#3ddc97", "xgb": "#ffb627",
-                "team": "#ffffff", "rule": "#8a9bb4", "dummy": "#4a5a73", "xgb_mono": "#ff8c42"}
+                "rule": "#8a9bb4", "dummy": "#4a5a73", "xgb_mono": "#ff8c42"}
 
 CSS = """
 <style>
@@ -136,63 +137,108 @@ h4 { font-size:1.15rem !important; margin-top:.6rem !important; color:#cfd8e6; }
 
 
 def setup_page():
+    """Inject the shared CSS theme into the page."""
     st.markdown(CSS, unsafe_allow_html=True)
 
 
 def header(code: str, title: str, sub: str):
+    """Departure-board style page header: gate code, title and subtitle."""
     st.markdown(f'<div class="board"><div><div class="code">{code}</div><h1>{title}</h1></div>'
                 f'<div class="sub">{sub}</div></div>', unsafe_allow_html=True)
 
 
 def note(text: str, warn: bool = False):
+    """Highlighted note box; warn=True uses the warning colour."""
     st.markdown(f'<div class="note{" warn" if warn else ""}">{text}</div>', unsafe_allow_html=True)
 
 
 # ---------- artifacts ----------
+def artifact_failure(what: str, exc: Exception):
+    """Stop the page with a readable message when a saved artifact is missing or unreadable.
+
+    The usual causes are an incomplete `git clone` / pull, or library versions that differ from the
+    ones that pickled the models (scikit-learn / xgboost), so the message names both fixes.
+    """
+    st.error(f"Could not load {what} from `{ART}`: {type(exc).__name__}: {exc}\n\n"
+             "Fix: re-run `git pull` (the model files are large), check `pip install -r requirements.txt`, "
+             "or retrain with `python train_full.py` / `python prototype_train.py`.")
+    st.stop()
+
+
 @st.cache_resource(show_spinner=False)
 def load_models():
+    """All fitted models (members, baselines) as {key: sklearn Pipeline}."""
     import joblib
     path = ART / "models.joblib" if (ART / "models.joblib").exists() else ART / "prototype_models.joblib"
     if not path.exists():
         st.error("No trained models found. Run `python prototype_train.py` first.")
         st.stop()
-    return joblib.load(path)
+    try:
+        return joblib.load(path)
+    except Exception as exc:  # corrupt / truncated pickle or incompatible library version
+        artifact_failure("the trained models", exc)
 
 
 @st.cache_data
 def load_test_predictions() -> pd.DataFrame:
-    return pd.read_parquet(ART / "test_predictions.parquet")
+    """Hold-out probabilities of every model plus the raw test features (one row per passenger)."""
+    try:
+        return pd.read_parquet(ART / "test_predictions.parquet")
+    except Exception as exc:
+        artifact_failure("the hold-out predictions", exc)
 
 
 @st.cache_data
 def load_metrics() -> dict:
-    return json.loads((ART / "metrics.json").read_text())
+    """Hold-out metrics and run metadata written by the training pipeline."""
+    try:
+        return json.loads((ART / "metrics.json").read_text())
+    except Exception as exc:  # missing file or invalid JSON
+        artifact_failure("the hold-out metrics", exc)
 
 
 @st.cache_resource(show_spinner=False)
 def load_variants():
+    """Advanced / stage / monotone model variants (merged from every variants*.joblib file)."""
     from src.store import load_variants as _load
-    return _load(ART)
+    try:
+        return _load(ART)
+    except Exception as exc:
+        artifact_failure("the model variants", exc)
 
 
 @st.cache_resource(show_spinner=False)
 def load_trust():
+    """Trust artifacts: conformal calibration scores, OOD detector, surrogate rules, monotonic checks."""
     import joblib
-    return joblib.load(ART / "trust.joblib")
+    try:
+        return joblib.load(ART / "trust.joblib")
+    except Exception as exc:
+        artifact_failure("the trust & fairness artifacts", exc)
+
+
+HEADLINE = "xgb"  # the model behind every single-number answer (Predict, Simulator, Planner, Trust)
 
 
 def predict(X: pd.DataFrame) -> pd.DataFrame:
-    return predict_all(load_models(), X)
+    """P(satisfied) from every member model and baseline (no team ensemble)."""
+    models = {k: m for k, m in load_models().items() if k != "team"}
+    return predict_all(models, X).drop(columns="team", errors="ignore")
+
+
+def p_headline(X: pd.DataFrame) -> np.ndarray:
+    """P(satisfied) from the headline model only (fast path for searches)."""
+    return load_models()[HEADLINE].predict_proba(X)[:, 1]
 
 
 def predict_stage(X: pd.DataFrame, stage: str) -> float:
-    """P(satisfied) from the stage-specific model (Landed = team ensemble)."""
+    """P(satisfied) from the stage-specific model (Landed = the full XGBoost)."""
     if stage == "Landed":
-        return float(predict(X)["team"].iloc[0])
+        return float(load_models()[HEADLINE].predict_proba(X)[0, 1])
     return float(load_variants()[f"stage::{stage}"].predict_proba(X)[0, 1])
 
 
-def conformal_label(p: float, level: float, model: str = "team") -> tuple[str, bool]:
+def conformal_label(p: float, level: float, model: str = HEADLINE) -> tuple[str, bool]:
     """Conformal prediction set for one passenger -> (text, is_certain)."""
     from src.trust import conformal_qhat, conformal_sets
     cal = load_trust()["cal"]
@@ -203,6 +249,7 @@ def conformal_label(p: float, level: float, model: str = "team") -> tuple[str, b
 
 
 def ood_percentile(X: pd.DataFrame) -> float:
+    """How unusual a passenger is versus the calibration passengers (percentile)."""
     return float(load_trust()["ood"].percentile(X)[0])
 
 
@@ -221,8 +268,9 @@ def test_shap(n: int = 6000) -> tuple[pd.DataFrame, pd.DataFrame]:
 
 @st.cache_data
 def cabin_rates() -> dict:
+    """Predicted satisfaction rate per cabin class on the hold-out set (3D cabin view)."""
     df = load_test_predictions()
-    return (df["team"] >= 0.5).groupby(df["Class"].astype(str)).mean().to_dict()
+    return (df[HEADLINE] >= 0.5).groupby(df["Class"].astype(str)).mean().to_dict()
 
 
 # ---------- passenger state ----------
@@ -247,10 +295,12 @@ PRESETS = {
 
 
 def key(col: str) -> str:
+    """Session-state key of a passenger field."""
     return "p_" + col.replace(" ", "_").replace("/", "_")
 
 
 def apply_preset(name: str):
+    """Load a preset passenger into the input widgets."""
     p = PRESETS[name]
     for col in C.CAT_COLS + [C.CLASS_COL] + C.NUM_COLS:
         st.session_state[key(col)] = p[col]
@@ -259,21 +309,36 @@ def apply_preset(name: str):
 
 
 def init_passenger():
+    """Load the default preset on first visit."""
     if key("Age") not in st.session_state:
         apply_preset("Borderline case")
 
 
 def current_passenger() -> pd.DataFrame:
+    """The passenger being edited, as a one-row frame. Falls back to a preset if the stored values are
+    invalid (e.g. a stale browser session), so no page ever predicts on malformed input."""
     init_passenger()
-    return pd.DataFrame([{col: st.session_state[key(col)] for col in C.FEATURE_COLS}])
+    try:
+        X = pd.DataFrame([{col: st.session_state[key(col)] for col in C.FEATURE_COLS}])
+        problems = validate_frame(X)
+    except KeyError as exc:
+        problems = [f"missing value {exc}"]
+    if problems:
+        st.warning("The stored passenger was invalid ({p}); a preset passenger was loaded instead."
+                   .format(p="; ".join(problems)))
+        apply_preset("Borderline case")
+        X = pd.DataFrame([{col: st.session_state[key(col)] for col in C.FEATURE_COLS}])
+    return X
 
 
 def rating_label(v: int) -> str:
+    """Star string for a rating; 0 shows as N/A."""
     return "N/A" if v == 0 else "★" * v
 
 
 # ---------- cards ----------
 def flaps(word: str, good: bool) -> str:
+    """Split-flap board animation for the verdict word."""
     cls = "good" if good else "bad"
     tiles = "".join(f'<div class="flap {cls}" style="animation-delay:{i*45}ms">{"&nbsp;" if ch == " " else ch}</div>'
                     for i, ch in enumerate(word.upper()))
@@ -281,9 +346,10 @@ def flaps(word: str, good: bool) -> str:
 
 
 def model_card(key_: str, p: float, threshold: float = 0.5) -> str:
+    """HTML card with one model's probability and verdict."""
     info = MODEL_INFO[key_]
     good = p >= threshold
-    kind = "base" if key_ in BASELINES else ("team" if key_ == "team" else "")
+    kind = "base" if key_ in BASELINES else ("team" if key_ == HEADLINE else "")
     color = GOOD if good else BAD
     return (f'<div class="card {kind}"><div class="role">{info["role"]}</div><div class="name">{info["name"]}</div>'
             f'<div class="pct" style="color:{color}">{p*100:.1f}%</div>'
@@ -292,7 +358,8 @@ def model_card(key_: str, p: float, threshold: float = 0.5) -> str:
 
 
 def cards_html(probs: pd.Series, order=None) -> str:
-    order = order or (["team"] + MEMBER_MODELS + BASELINES)
+    """Row of model cards, headline model first."""
+    order = order or ([HEADLINE] + [k for k in MEMBER_MODELS if k != HEADLINE] + BASELINES)
     return '<div class="cards">' + "".join(model_card(k, float(probs[k])) for k in order if k in probs) + "</div>"
 
 
@@ -354,6 +421,7 @@ METRIC_COLORS = ["#ffb627", "#3ddc97", "#5ab0ff", "#c792ea", "#ff8c42", "#e9eef6
 
 
 def color_scale(keys):
+    """Altair colour scale that gives every model its fixed colour."""
     return alt.Scale(domain=[MODEL_INFO[k]["name"] for k in keys], range=[MODEL_COLORS[k] for k in keys])
 
 

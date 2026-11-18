@@ -17,9 +17,15 @@ from .evaluation import make_cv, metrics_from_proba
 
 
 def optimise_weights(oof: np.ndarray, y, n_trials=200) -> np.ndarray:
+    """Find soft-vote weights for the members with Optuna (200 trials).
+
+    Objective: F1 on out-of-fold probabilities, minus a tiny log-loss term that only
+    breaks ties. Trial 0 is equal weights, so the result can only match or beat it.
+    """
     y = np.asarray(y)
 
     def objective(trial):
+        """F1 of the weighted average of members' probabilities for one weight vector."""
         w = np.array([trial.suggest_float(f"w{i}", 0.0, 1.0) for i in range(oof.shape[1])])
         if w.sum() == 0:
             return -1.0
