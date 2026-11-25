@@ -99,7 +99,7 @@ def _plane_svg(selected, seat):
   <path d="M60 {mid} C 70 {TOP - 2}, 120 {TOP - 14}, 190 {TOP - 14} L1250 {TOP - 14} C 1330 {TOP - 14}, 1390 {mid - 18}, 1395 {mid}
            C 1390 {mid + 18}, 1330 {BOT + 14}, 1250 {BOT + 14} L190 {BOT + 14} C 120 {BOT + 14}, 70 {BOT + 2}, 60 {mid} Z"
         fill="url(#hull)" stroke="#3a5075" stroke-width="2"/>
-  <path d="M86 {mid - 14} q 14 -14 30 -16 v 32 q -16 -2 -30 -16 Z" fill="#0b1220" opacity=".85"/>
+  <path d="M86 {mid - 14} q 14 -14 30 -16 v 32 q -16 -2 -30 -16 Z" fill="#0e1218" opacity=".85"/>
   <rect x="150" y="{TOP}" width="1150" height="{BOT - TOP}" rx="10" fill="#0f1a2c"/>
   {''.join(zones)}
   <!-- galleys / lavatories -->
@@ -121,21 +121,17 @@ def render(selected: str, previous: str, seat: str, verdict_good: bool, p: float
 
     start = cam(previous) if previous in CABINS and previous != selected else cam(selected, focus=False)
     end = cam(selected)
-    color = "#3ddc97" if verdict_good else "#ff5d5d"
+    color = "#4cc38a" if verdict_good else "#e8675d"
     rate = cabin_rates.get(selected)
     chips = "".join(
         f'<div class="chip{" on" if c == selected else ""}"><b style="color:{CABINS[c]["color"]}">●</b> {LABELS[c]}'
         f'<span>{"{p:.0f}% satisfied".format(p=cabin_rates.get(c, 0) * 100)}</span></div>' for c in CABINS)
     html = f"""
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=JetBrains+Mono:wght@400;600&family=Instrument+Sans:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Instrument+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  html,body {{ margin:0; background:transparent; overflow:hidden; font-family:'Instrument Sans',sans-serif; color:#e9eef6; }}
-  .wrap {{ position:relative; height:400px; border-radius:14px; overflow:hidden;
-           background: radial-gradient(900px 300px at 50% 70%, rgba(90,176,255,.10), transparent 70%),
-                       linear-gradient(#0d1628, #0a111f); border:1px solid #22314a; }}
-  .wrap::before {{ content:""; position:absolute; inset:0; background:
-           repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 28px),
-           repeating-linear-gradient(90deg, rgba(255,255,255,.025) 0 1px, transparent 1px 28px); }}
+  html,body {{ margin:0; background:transparent; overflow:hidden; font-family:'Instrument Sans',sans-serif; color:#e4e8ee; }}
+  .wrap {{ position:relative; height:400px; border-radius:12px; overflow:hidden;
+           background:linear-gradient(#161b23, #10141a); border:1px solid rgba(214,222,235,.09); }}
   .stage {{ position:absolute; inset:0; perspective:1300px; perspective-origin:50% 30%; }}
   .plane {{ position:absolute; left:2%; right:2%; top:28%; transform-style:preserve-3d;
             transform:{start}; transition:transform 1.5s cubic-bezier(.65,.02,.2,1);
@@ -144,35 +140,33 @@ def render(selected: str, previous: str, seat: str, verdict_good: bool, p: float
   .zone {{ fill:var(--c); opacity:.10; transition:opacity .8s; }}
   .zone.dim {{ opacity:.03; }}
   .cabin.dim {{ opacity:.28; }}
-  .seat {{ stroke:#0b1220; stroke-width:1; }}
+  .seat {{ stroke:#0e1218; stroke-width:1; }}
   .seat.me {{ fill:{color}; stroke:#fff; stroke-width:1.2; }}
-  .ping {{ fill:none; stroke:{color}; stroke-width:2; transform-box:fill-box; transform-origin:center;
-           animation:ping 1.6s ease-out infinite; }}
-  @keyframes ping {{ from {{ transform:scale(.6); opacity:1 }} to {{ transform:scale(2.4); opacity:0 }} }}
-  .svc {{ fill:#1e2c45; stroke:#2f4366; }}
-  .rowno {{ fill:#6d7f9c; font:600 8px 'JetBrains Mono',monospace; text-anchor:middle; }}
+  .ping {{ fill:none; stroke:{color}; stroke-width:1.5; opacity:.7; }}
+  .svc {{ fill:#1f252f; stroke:#2e3541; }}
+  .rowno {{ fill:#6f7987; font:500 8px 'JetBrains Mono',monospace; text-anchor:middle; }}
   .hud {{ position:absolute; left:18px; top:14px; z-index:2; max-width:calc(100% - 200px); }}
   @media (max-width: 560px) {{
     .hud {{ max-width:calc(100% - 130px); }} .hud .s {{ display:none; }} .hud .t {{ font-size:1.5rem; }}
     .tag .seatno {{ font-size:1.5rem; }} .chip {{ font-size:.66rem; padding:4px 8px; }}
   }}
-  .hud .k {{ font:600 .68rem 'JetBrains Mono',monospace; letter-spacing:.2em; color:#ffb627; }}
-  .hud .t {{ font:800 2rem 'Big Shoulders Display',sans-serif; text-transform:uppercase; line-height:1; }}
-  .hud .s {{ font:400 .8rem 'JetBrains Mono',monospace; color:#8a9bb4; margin-top:4px; }}
+  .hud .k {{ font:400 .78rem 'Instrument Sans',sans-serif; color:#a7b0bd; }}
+  .hud .t {{ font:500 1.6rem 'Instrument Sans',sans-serif; line-height:1.2; margin-top:2px; }}
+  .hud .s {{ font:400 .8rem 'JetBrains Mono',monospace; color:#8b95a3; margin-top:4px; }}
   .tag {{ position:absolute; right:18px; top:14px; z-index:2; text-align:right; }}
-  .tag .seatno {{ font:600 1.9rem 'JetBrains Mono',monospace; color:{color}; line-height:1; }}
-  .tag .lbl {{ font:400 .7rem 'JetBrains Mono',monospace; letter-spacing:.18em; color:#8a9bb4; }}
+  .tag .seatno {{ font:500 1.8rem 'JetBrains Mono',monospace; color:{color}; line-height:1.1; }}
+  .tag .lbl {{ font:400 .78rem 'Instrument Sans',sans-serif; color:#a7b0bd; }}
   .chips {{ position:absolute; left:14px; right:14px; bottom:12px; display:flex; gap:8px; flex-wrap:wrap; z-index:2; }}
-  .chip {{ font:400 .74rem 'JetBrains Mono',monospace; padding:5px 10px; border-radius:99px; background:rgba(18,28,46,.85);
-           border:1px solid #22314a; color:#8a9bb4; }}
-  .chip.on {{ color:#e9eef6; border-color:#ffb627; }}
-  .chip span {{ margin-left:8px; color:#e9eef6; }}
+  .chip {{ font:400 .74rem 'JetBrains Mono',monospace; padding:4px 10px; border-radius:6px; background:rgba(21,26,34,.9);
+           border:1px solid #2a313c; color:#8b95a3; }}
+  .chip.on {{ color:#e4e8ee; border-color:#f0b43c; }}
+  .chip span {{ margin-left:8px; color:#e4e8ee; }}
 </style>
 <div class="wrap" id="wrap">
-  <div class="hud"><div class="k">{"CABIN VIEW"}</div><div class="t">{LABELS[selected]}</div>
+  <div class="hud"><div class="k">{"Cabin view"}</div><div class="t">{LABELS[selected]}</div>
     <div class="s">{"Hold-out passengers in this cabin: {p:.1f}% predicted satisfied".format(p=rate * 100 if rate is not None else 0)}</div></div>
-  <div class="tag"><div class="lbl">{"PASSENGER SEAT"}</div><div class="seatno">{seat}</div>
-    <div class="lbl" style="color:{color}">{"P(SATISFIED)"} {p:.2f}</div></div>
+  <div class="tag"><div class="lbl">{"Passenger seat"}</div><div class="seatno">{seat}</div>
+    <div class="lbl" style="color:{color}">{"P(satisfied)"} {p:.2f}</div></div>
   <div class="stage"><div class="plane" id="plane">{_plane_svg(selected, seat)}</div></div>
   <div class="chips">{chips}</div>
 </div>

@@ -6,7 +6,7 @@ import ui
 from ui import C
 from src.whatif import DEFAULT_COSTS, counterfactual
 
-ui.header("GATE 02 · WHAT-IF", "Service improvement simulator",
+ui.header("Service improvement simulator",
           "Change one service and watch every model react, or let the system find the cheapest upgrades "
             "that turn this passenger into a satisfied one.")
 
@@ -80,7 +80,7 @@ with tab_cf:
                             ("Cost", "width:6rem;text-align:right"),
                             ("P(satisfied)", "width:9rem;text-align:right"))
         html += "".join(f'<div class="step"><span class="n">{i+1:02d}</span><span style="flex:1">{s}</span>'
-                       f'<span class="mono" style="color:#8a9bb4;width:9rem;text-align:right">{ui.rating_label(a)} → {ui.rating_label(b)}</span>'
+                       f'<span class="mono" style="color:#8b95a3;width:9rem;text-align:right">{ui.rating_label(a)} → {ui.rating_label(b)}</span>'
                        f'<span class="mono" style="color:{ui.ACCENT};width:6rem;text-align:right">RM {real_costs.get(s, 0):,.0f}</span>'
                        f'<span class="mono" style="color:{ui.GOOD};width:9rem;text-align:right">{p0:.3f} → {p1:.3f}</span></div>'
                        for i, (s, a, b, _, p0, p1) in enumerate(steps))

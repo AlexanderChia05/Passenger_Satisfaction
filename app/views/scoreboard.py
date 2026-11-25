@@ -8,7 +8,7 @@ import ui
 from ui import C
 
 meta = ui.load_metrics()
-ui.header("GATE 07 · RESULTS", "Model scoreboard",
+ui.header("Model scoreboard",
           "Hold-out performance of every model versus the two baselines, error analysis, head-to-head model duels, "
           "and the feedback log."
           + " " + ("Tuned models trained on the full training set." if meta.get("mode") == "full"
@@ -33,16 +33,16 @@ with tab_over:
     best = max(ui.MEMBER_MODELS, key=lambda k: m[k]["F1"])
     k = st.columns(4)
     k[0].markdown(ui.kpi("Best model (F1)", ui.mname(best), ui.ACCENT), unsafe_allow_html=True)
-    k[1].markdown(ui.kpi("Best accuracy", f"{m[best]['Accuracy']*100:.2f}%", ui.GOOD), unsafe_allow_html=True)
-    k[2].markdown(ui.kpi("Lift vs dummy", "+{d:.1f} pts".format(d=(m[best]['Accuracy'] - m['dummy']['Accuracy']) * 100)),
+    k[1].markdown(ui.kpi("Best accuracy", f"{m[best]['Accuracy']*100:.2f}%"), unsafe_allow_html=True)
+    k[2].markdown(ui.kpi("Accuracy gain vs dummy", "+{d:.1f} pts".format(d=(m[best]['Accuracy'] - m['dummy']['Accuracy']) * 100)),
                   unsafe_allow_html=True)
-    k[3].markdown(ui.kpi("Lift vs rule", "+{d:.1f} pts".format(d=(m[best]['Accuracy'] - m['rule']['Accuracy']) * 100)),
+    k[3].markdown(ui.kpi("Accuracy gain vs rule", "+{d:.1f} pts".format(d=(m[best]['Accuracy'] - m['rule']['Accuracy']) * 100)),
                   unsafe_allow_html=True)
     st.write("")
 
     tm = [c for c in metric_cols]
     st.dataframe(table.style.format({c: "{:.4f}" for c in tm}, na_rep="-")
-                 .highlight_max(subset=tm, color="#3a2f12"),
+                 .highlight_max(subset=tm, props="color:#f0b43c; font-weight:500"),
                  hide_index=True, width="stretch")
     st.caption("Recall: share of satisfied passengers found. Precision: share of predicted-satisfied that truly are. MCC: robust to class imbalance.")
 
@@ -57,14 +57,20 @@ with tab_over:
         pr_rows.append(pd.DataFrame({"x": rec[idx], "y": prec[idx], "model": ui.mname(key)}))
 
     left, right = st.columns(2, gap="large")
-    for col, data, title, xt, yt in [(left, roc_rows, "ROC curve", "False positive rate", "True positive rate"),
-                                     (right, pr_rows, "Precision-recall curve", "Recall", "Precision")]:
+    # Every member sits in the top-left corner on a 0-1 axis; zoom there so the curves can be told apart.
+    zoom = [(left, roc_rows, "ROC curve, zoomed to the top-left corner", "False positive rate", "True positive rate",
+             [0, 0.3], [0.7, 1]),
+            (right, pr_rows, "Precision-recall curve, zoomed to the top-right corner", "Recall", "Precision",
+             [0.7, 1], [0.7, 1])]
+    for col, data, title, xt, yt, xd, yd in zoom:
         with col:
             st.markdown(f"#### {title}")
-            ch = alt.Chart(pd.concat(data)).mark_line(strokeWidth=2).encode(
-                x=alt.X("x:Q", title=xt), y=alt.Y("y:Q", title=yt, scale=alt.Scale(zero=False)),
+            ch = alt.Chart(pd.concat(data)).mark_line(strokeWidth=2, clip=True).encode(
+                x=alt.X("x:Q", title=xt, scale=alt.Scale(domain=xd)), y=alt.Y("y:Q", title=yt, scale=alt.Scale(domain=yd)),
                 color=alt.Color("model:N", scale=ui.color_scale(curve_keys), legend=ui.bottom_legend(3)))
             st.altair_chart(ui.themed(ch.properties(height=300)), width="stretch")
+    st.caption("ROC-AUC: " + " · ".join(f"{ui.mname(k)} {m[k]['ROC-AUC']:.4f}" for k in curve_keys if k in m)
+               + ". The rule baseline sits far below the members; only its edge enters this window.")
 
 with tab_err:
     error_analysis.render()
@@ -92,7 +98,7 @@ with tab_duel:
         winner = ui.mname(m1 if only_a > only_b else m2)
         ui.note(f"McNemar χ² = {stat:.1f}, p = {pval:.2g}: " + ("<b>{w}</b> is significantly better (p < 0.05).".format(w=winner)
                 if pval < 0.05 else "no significant difference between the two models."))
-    st.markdown(f"#### {'Passengers they disagree on'}")
+    st.markdown("#### Passengers they disagree on")
     # same model on both sides: keep one probability column (duplicate names crash st.dataframe)
     dis = preds.loc[pa != pb, C.FEATURE_COLS + list(dict.fromkeys([m1, m2])) + ["y_true"]].copy()
     dis["actual"] = dis.pop("y_true").map({1: "satisfied", 0: "dissatisfied"})

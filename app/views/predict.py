@@ -10,7 +10,7 @@ import ui
 from ui import C
 from src.whatif import DEFAULT_COSTS, counterfactual
 
-ui.header("GATE 01 · LIVE PREDICTION", "Will this passenger be satisfied?",
+ui.header("Will this passenger be satisfied?",
           "Pick the cabin, enter the passenger and their service ratings, and every model scores the passenger "
             "side by side against the baselines.")
 
@@ -37,7 +37,7 @@ st.session_state["_last_class"] = selected
 left, right = st.container(key="predict_main").columns([5, 7], gap="large")
 
 with left:
-    st.markdown(f"#### {'Quick passengers'}")
+    st.markdown("#### Example passengers")
     cols = st.columns(2)
     for i, name in enumerate(ui.PRESETS):
         cols[i % 2].button(name, on_click=ui.apply_preset, args=(name,), width="stretch", key=f"preset_{i}")
@@ -61,32 +61,44 @@ with left:
                                                    format_func=ui.rating_label, key=ui.key(col))
 
 with right:
-    label = "M4 XGBOOST"
-    st.markdown(f'<div class="mono" style="color:#8a9bb4;letter-spacing:.2em;font-size:.75rem">'
-                f'{label} {"VERDICT"}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="color:{ui.TEXT2};font-size:.85rem">Verdict from M4 XGBoost</div>', unsafe_allow_html=True)
     st.markdown(ui.flaps("Satisfied" if good else "Dissatisfied", good), unsafe_allow_html=True)
 
     probs = ui.predict(X).iloc[0]
+    # The verdict is one model's; show at once whether the other member models agree with it.
+    others = [m for m in ui.MEMBER_MODELS if m != ui.HEADLINE]
+    agree = [m for m in others if (probs[m] >= 0.5) == good]
+    differ = [m for m in others if (probs[m] >= 0.5) != good]
+    st.markdown(f'<div style="color:{ui.TEXT2};font-size:.85rem;margin:-4px 0 12px">'
+                f'<span class="mono" style="color:{ui.TEXT}">{len(agree)} of {len(others)}</span> '
+                f'other member models agree</div>', unsafe_allow_html=True)
+    if differ:
+        names = lambda ks: ", ".join(ui.mname(k) for k in ks)  # noqa: E731
+        ui.note("<b>Members disagree.</b> {d} {v} {o}, while {a} {v2} {w}. Treat this as a borderline passenger: "
+                "check the drivers below and the Service simulator before acting.".format(
+                    d=names(differ), v="says" if len(differ) == 1 else "say",
+                    o="dissatisfied" if good else "satisfied", a=names(agree + [ui.HEADLINE]),
+                    v2="says" if not agree else "say",
+                    w="satisfied" if good else "dissatisfied"), warn=True)
     level = st.select_slider("Conformal confidence level", [0.80, 0.90, 0.95, 0.99], value=0.95,
                              format_func=lambda v: f"{v:.0%}")
     cset, certain = ui.conformal_label(p_team, level)
     ood = ui.ood_percentile(X)
     empty_set = cset.startswith("{ }")
     k = st.columns(3)
-    k[0].markdown(ui.kpi("P(SATISFIED)", f"{p_team:.3f}", ui.GOOD if good else ui.BAD,
+    k[0].markdown(ui.kpi("P(satisfied)", f"{p_team:.3f}", ui.GOOD if good else ui.BAD,
                          "XGBoost probability"), unsafe_allow_html=True)
-    shown_set = "{ }" if empty_set else cset.replace("Dissatisfied", "Dissat.").replace(
-        "Satisfied" + ",", "Sat." + ",")
-    k[1].markdown(ui.kpi("{lv:.0%} prediction set".format(lv=level), shown_set, ui.GOOD if certain else ui.ACCENT,
-                         "One label = confident" if certain else
-                         ("Empty set = no confident call" if empty_set else "Both labels = not a confident call")),
+    shown_set = "No label" if empty_set else ("Both" if not certain else "One label")
+    k[1].markdown(ui.kpi("{lv:.0%} prediction set".format(lv=level), shown_set, ui.TEXT if certain else ui.ACCENT,
+                         "{} only: XGBoost is confident".format(cset.strip("{}")) if certain else
+                         ("No confident call" if empty_set else "Both outcomes possible")),
                   unsafe_allow_html=True)
     pct = round(ood)
     suffix = "th" if 10 <= pct % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(pct % 10, "th")
-    pct_txt = f"{pct}{suffix} pct"
-    k[2].markdown(ui.kpi("Unusualness", pct_txt,
-                         ui.BAD if ood > 99 else ("#e9eef6" if ood < 95 else ui.ACCENT),
-                         "vs. training passengers"), unsafe_allow_html=True)
+    pct_txt = f"{pct}{suffix}"
+    k[2].markdown(ui.kpi("How unusual", pct_txt,
+                         ui.BAD if ood > 99 else (ui.TEXT if ood < 95 else ui.ACCENT),
+                         "percentile of distance to training passengers"), unsafe_allow_html=True)
     if empty_set:
         ui.note(("<b>Uncertain passenger.</b> At {lv:.0%} confidence neither outcome is supported strongly enough, "
                   "so the conformal set is empty - a human should review before acting.").format(lv=level), warn=True)
@@ -96,13 +108,9 @@ with right:
     if ood > 99:
         ui.note("<b>Out-of-distribution.</b> This passenger is further from the training data than 99% of "
                   "calibration passengers; predictions may be unreliable.", warn=True)
-    member_votes = [probs[m] >= 0.5 for m in ui.MEMBER_MODELS]
-    if len(set(member_votes)) > 1:
-        ui.note("Models disagree: {n} of 4 member models say <b>satisfied</b>.".format(n=sum(member_votes)), warn=True)
-
     st.markdown(ui.cards_html(probs), unsafe_allow_html=True)
 
-    st.markdown(f"#### {'Why? Top drivers (XGBoost TreeSHAP)'}")
+    st.markdown("#### What drives this verdict (XGBoost TreeSHAP)")
     contrib = ui.xgb_contributions(X).head(10)
     pos, neg = "Pushes to satisfied", "Pushes to dissatisfied"
     contrib["direction"] = contrib["shap"].map(lambda s: pos if s > 0 else neg)
@@ -114,7 +122,7 @@ with right:
         tooltip=["label", alt.Tooltip("shap:Q", format="+.3f")],
     ).properties(height=30 * len(contrib))
     st.altair_chart(ui.themed(chart), width="stretch")
-    st.markdown(f'<div class="mono" style="font-size:.78rem;color:#8a9bb4">'
+    st.markdown(f'<div style="font-size:.8rem;color:{ui.TEXT2};margin-bottom:12px">'
                 f'<b style="color:{ui.GOOD}">■</b> {pos} &nbsp;&nbsp; <b style="color:{ui.BAD}">■</b> {neg}</div>',
                 unsafe_allow_html=True)
 

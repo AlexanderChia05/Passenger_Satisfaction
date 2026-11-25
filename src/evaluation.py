@@ -88,7 +88,9 @@ def mcnemar(y, p_a, p_b, threshold=0.5) -> dict:
     y = np.asarray(y)
     ca, cb = (np.asarray(p_a) >= threshold) == y, (np.asarray(p_b) >= threshold) == y
     n01, n10 = int((ca & ~cb).sum()), int((~ca & cb).sum())
-    stat = (abs(n01 - n10) - 1) ** 2 / max(n01 + n10, 1)
+    # No discordant pairs = no evidence of a difference; without this guard the continuity
+    # correction turns |0 - 0| - 1 into a chi-square of 1 (p = 0.32) instead of 0 (p = 1).
+    stat = (abs(n01 - n10) - 1) ** 2 / (n01 + n10) if n01 + n10 else 0.0
     return {"only_A_right": n01, "only_B_right": n10, "chi2": stat, "p_value": float(stats.chi2.sf(stat, 1))}
 
 

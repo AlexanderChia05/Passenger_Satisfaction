@@ -6,7 +6,7 @@ import ui
 from ui import C
 from src.whatif import DEFAULT_COSTS, plan_budget
 
-ui.header("GATE 03 · INVEST", "Service budget planner",
+ui.header("Service budget planner",
           "Give the planner a budget and a passenger group. It picks which services to upgrade, step by step, "
             "to turn the most passengers into satisfied ones per ringgit spent.")
 
@@ -75,13 +75,13 @@ else:
         shown = steps
         chart_df = pd.concat([pd.DataFrame({"step": ["start"], "satisfied rate": [r0]}),
                               shown.assign(step=shown["step"].astype(str) + ". " + shown["service"])[["step", "satisfied rate"]]])
-        st.markdown(f"#### {'Satisfied rate after each upgrade step'}")
+        st.markdown("#### Satisfied rate after each upgrade step")
         base = alt.Chart(chart_df).encode(y=alt.Y("step:N", sort=None, title=None))
         bars = base.mark_bar(cornerRadiusEnd=4, height=alt.RelativeBandSize(0.7), color=ui.ACCENT).encode(
             x=alt.X("satisfied rate:Q", axis=alt.Axis(format="%"), scale=alt.Scale(domain=[0, 1]),
                     title="satisfied rate"),
             tooltip=["step", alt.Tooltip("satisfied rate:Q", format=".1%")])
-        labels = base.mark_text(align="left", dx=4, color="#e9eef6", font="JetBrains Mono", fontSize=11).encode(
+        labels = base.mark_text(align="left", dx=4, color="#e4e8ee", font="JetBrains Mono", fontSize=11).encode(
             x="satisfied rate:Q", text=alt.Text("satisfied rate:Q", format=".1%"))
         st.altair_chart(ui.themed((bars + labels).properties(height=26 * len(chart_df))), width="stretch")
         st.dataframe(shown.style.format({"cost (RM)": "{:,.0f}", "RM per convert": "{:,.0f}",

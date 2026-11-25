@@ -68,32 +68,35 @@ def render():
     fp = (pred == 0) & (y == 1)  # false alarm
 
     k = st.columns(4)
-    k[0].markdown(ui.kpi("Errors", f"{int(wrong.sum()):,}", ui.BAD, f"{wrong.mean() * 100:.2f}% of passengers"),
+    k[0].markdown(ui.kpi("Errors", f"{int(wrong.sum()):,}", ui.TEXT, f"{wrong.mean() * 100:.2f}% of passengers"),
                   unsafe_allow_html=True)
     k[1].markdown(ui.kpi("Missed unhappy", f"{int(fn.sum()):,}", ui.BAD,
                          f"{fn.sum() / max((y == 0).sum(), 1) * 100:.1f}% of dissatisfied"), unsafe_allow_html=True)
-    k[2].markdown(ui.kpi("False alarms", f"{int(fp.sum()):,}", ui.ACCENT,
+    k[2].markdown(ui.kpi("False alarms", f"{int(fp.sum()):,}", ui.TEXT,
                          f"{fp.sum() / max((y == 1).sum(), 1) * 100:.1f}% of satisfied"), unsafe_allow_html=True)
-    k[3].markdown(ui.kpi("Error balance", f"{fn.sum() / max(fp.sum(), 1):.2f} : 1", "#e9eef6",
+    k[3].markdown(ui.kpi("Error balance", f"{fn.sum() / max(fp.sum(), 1):.2f} : 1", ui.TEXT,
                          "missed unhappy per false alarm"), unsafe_allow_html=True)
 
     # ---- 1) confusion matrix ----
-    st.markdown("#### Confusion matrix")
+    st.markdown("#### Confusion matrix (rows = actual, columns = predicted)")
     cm = confusion(y, pred)
     order = ["Satisfied", "Dissatisfied"]
-    base = alt.Chart(cm).encode(x=alt.X("Predicted:N", sort=order, axis=alt.Axis(orient="top", labelAngle=0)),
-                                y=alt.Y("Actual:N", sort=order))
-    cells = base.mark_rect(cornerRadius=6, stroke="#0b1220", strokeWidth=3).encode(
-        color=alt.Color("kind:N", legend=ui.bottom_legend(),
-                        scale=alt.Scale(domain=["Correct", "Missed unhappy", "False alarm"],
-                                        range=["#1f4d3a", "#6b2a2a", "#5c4513"])),
+    base = alt.Chart(cm).encode(x=alt.X("Predicted:N", sort=order, title=None, axis=alt.Axis(orient="top", labelAngle=0)),
+                                y=alt.Y("Actual:N", sort=order, title=None, axis=alt.Axis(labelPadding=8)))
+    # Same visual language as the Decision policy page: colour = what the cell means, label inside the cell.
+    cells = base.mark_rect(cornerRadius=8, stroke=ui.BG, strokeWidth=4).encode(
+        color=alt.Color("kind:N", legend=None,
+                        scale=alt.Scale(domain=["Correct", "False alarm", "Missed unhappy"],
+                                        range=["#1f2630", "#4a3a1c", "#4a2422"])),
         tooltip=["Actual", "Predicted", "kind", alt.Tooltip("count:Q", format=","),
                  alt.Tooltip("share:Q", format=".2%")])
-    num = base.mark_text(fontSize=22, fontWeight=700, color="#e9eef6", dy=-8, font="JetBrains Mono").encode(
+    num = base.mark_text(fontSize=20, fontWeight=500, color=ui.TEXT, dy=-12, font="JetBrains Mono").encode(
         text=alt.Text("count:Q", format=","))
-    pct = base.mark_text(fontSize=12, color="#aab7cb", dy=16).encode(text=alt.Text("share:Q", format=".1%"))
+    kind = base.mark_text(fontSize=11, color=ui.TEXT2, dy=10).encode(text="kind:N")
+    pct = base.mark_text(fontSize=11, color=ui.MUTED, dy=26, font="JetBrains Mono").encode(
+        text=alt.Text("share:Q", format=".1%"))
     a, b = st.columns([1, 1], gap="large")
-    a.altair_chart(ui.themed((cells + num + pct).properties(height=260)), width="stretch")
+    a.altair_chart(ui.themed((cells + num + kind + pct).properties(height=260)), width="stretch")
     b.markdown(
         f"- **Precision** {((pred == 1) & (y == 1)).sum() / max((pred == 1).sum(), 1):.3f}: of passengers predicted satisfied, "
         f"this share really is.\n"
@@ -125,7 +128,7 @@ def render():
         color=alt.Color("error type:N", scale=alt.Scale(domain=["missed unhappy", "false alarm"],
                                                          range=[ui.BAD, ui.ACCENT]), legend=ui.bottom_legend()),
         tooltip=["segment", "error type", alt.Tooltip("rate:Q", format=".2%"), alt.Tooltip("passengers:Q", format=",")])
-    rule = alt.Chart(pd.DataFrame({"x": [overall]})).mark_rule(strokeDash=[5, 4], color="#e9eef6").encode(x="x:Q")
+    rule = alt.Chart(pd.DataFrame({"x": [overall]})).mark_rule(strokeDash=[5, 4], color=ui.TEXT).encode(x="x:Q")
     st.altair_chart(ui.themed((bars + rule).properties(height=34 * len(sdf) + 20)), width="stretch")
     worst = sdf.iloc[0]
     st.caption(f"Dashed line = overall error rate {overall:.2%}. Hardest segment: **{worst['segment']}** "

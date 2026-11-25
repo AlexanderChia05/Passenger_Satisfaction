@@ -24,21 +24,17 @@ with st.spinner("Loading the trained models..."):
 
 m = ui.load_metrics()
 full = m.get("mode") == "full"
-with st.sidebar:
-    st.markdown(f'<div class="board" style="border:none;margin:0"><div><div class="code">BMDS2114 · '
-                f'{"TUNED MODELS" if full else "PROTOTYPE"}</div>'
-                '<h1 style="font-size:2rem">SkyPulse</h1></div></div>', unsafe_allow_html=True)
 
 pages = [
-    st.Page("views/overview.py", title="Project overview", icon="🗺️", default=True),
-    st.Page("views/predict.py", title="Predict passenger", icon="✈️"),
-    st.Page("views/simulator.py", title="Service simulator", icon="🎚️"),
-    st.Page("views/planner.py", title="Budget planner", icon="💰"),
-    st.Page("views/policy.py", title="Decision policy", icon="⚖️"),
-    st.Page("views/trust.py", title="Trust & fairness", icon="🛡️"),
-    st.Page("views/explain.py", title="Explain the models", icon="🧭"),
-    st.Page("views/scoreboard.py", title="Model scoreboard", icon="🏁"),
-    st.Page("views/lab.py", title="Experiment lab", icon="🧪"),
+    st.Page("views/overview.py", title="Project overview", icon=":material/dashboard:", default=True),
+    st.Page("views/predict.py", title="Predict passenger", icon=":material/flight:"),
+    st.Page("views/simulator.py", title="Service simulator", icon=":material/tune:"),
+    st.Page("views/planner.py", title="Budget planner", icon=":material/savings:"),
+    st.Page("views/policy.py", title="Decision policy", icon=":material/rule:"),
+    st.Page("views/trust.py", title="Trust & fairness", icon=":material/verified_user:"),
+    st.Page("views/explain.py", title="Explain the models", icon=":material/insights:"),
+    st.Page("views/scoreboard.py", title="Model scoreboard", icon=":material/leaderboard:"),
+    st.Page("views/lab.py", title="Experiment lab", icon=":material/science:"),
 ]
 try:
     st.navigation(pages).run()
@@ -49,8 +45,9 @@ except Exception as exc:  # st.stop / st.rerun are BaseException subclasses, so 
         st.exception(exc)
 
 with st.sidebar:
-    if full:
-        st.caption("Tuned models trained on {n:,} passengers · scored on {m:,} hold-out passengers.".format(n=m["trained_on_rows"], m=m["test_rows"]))
-    else:
-        st.caption(("Prototype models: untuned, trained on {n:,} rows · scored on {m:,} hold-out passengers. "
-                     "Run `python train_full.py` for the full system.").format(n=m["trained_on_rows"], m=m["test_rows"]))
+    st.markdown('<div class="brand"><div class="name">SkyPulse</div><div class="meta">BMDS2114 · {mode}<br>'
+                '{n:,} train · {t:,} hold-out</div></div>'.format(
+                    mode="tuned models" if full else "prototype models", n=m["trained_on_rows"], t=m["test_rows"]),
+                unsafe_allow_html=True)
+    if not full:
+        st.caption("Run `python train_full.py` for the full system.")

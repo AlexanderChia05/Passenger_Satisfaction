@@ -8,8 +8,8 @@ import ui
 from ui import C
 from src.trust import conformal_qhat, conformal_sets
 
-ui.header("GATE 05 · TRUST", "Trust & fairness",
-          "Can we rely on the models? Statistically guaranteed uncertainty, fairness across passenger groups, "
+ui.header("Trust & fairness",
+          "Can we rely on the models? Calibrated uncertainty with a coverage guarantee, fairness across passenger groups, "
             "sensible behaviour under constraints, and accuracy before the survey is complete.")
 
 test = ui.load_test_predictions()
@@ -31,9 +31,8 @@ with tab_conf:
             q = conformal_qhat(cal[k].to_numpy(), cal["y_true"].to_numpy(), 1 - lv)
             s, d = conformal_sets(test[k].to_numpy(), q)
             covered = np.where(y == 1, s, d)
-            rows.append({"model": ui.mname(k), "target": lv, "coverage": covered.mean(),
-                         # not exactly one label: both labels OR empty set (Predict flags both as uncertain)
-                         "uncertain share": (s == d).mean(),"avg set size": (s.astype(int) + d.astype(int)).mean()})
+            rows.append({"model": ui.mname(k), "key": k, "target": lv, "coverage": covered.mean(),
+                         "One label": (s != d).mean(), "Both labels": (s & d).mean(), "No label": (~s & ~d).mean()})
     cdf = pd.DataFrame(rows)
     a, b = st.columns(2)
     dom = alt.Scale(domain=[0.8, 1])
@@ -44,14 +43,25 @@ with tab_conf:
         y=alt.Y("coverage:Q", title="Achieved coverage (hold-out)", scale=alt.Scale(domain=[0.8, 1]), axis=alt.Axis(format="%")),
         color=alt.Color("model:N", scale=ui.color_scale(keys), legend=ui.bottom_legend(3)),
         tooltip=["model", alt.Tooltip("target:Q", format=".0%"), alt.Tooltip("coverage:Q", format=".2%")])
-    a.altair_chart(ui.themed((diag + cov).properties(height=280, title="Coverage is guaranteed")), width="stretch")
-    unc = alt.Chart(cdf).mark_line(point=True).encode(
-        x=alt.X("target:Q", title="Target coverage", scale=alt.Scale(domain=[0.8, 1]), axis=alt.Axis(format="%")),
-        y=alt.Y("uncertain share:Q", title="Passengers flagged 'uncertain'", axis=alt.Axis(format="%")),
-        color=alt.Color("model:N", scale=ui.color_scale(keys), legend=ui.bottom_legend(3)))
-    b.altair_chart(ui.themed(unc.properties(height=280, title="Price of certainty: more flagged passengers")),
+    a.altair_chart(ui.themed((diag + cov).properties(height=280, title="Achieved coverage tracks the target")),
                    width="stretch")
-    st.caption("A sharper model flags fewer passengers as uncertain at the same guaranteed coverage.")
+    with b:
+        mk = st.selectbox("Model", keys, format_func=ui.mname, index=keys.index(ui.HEADLINE), key="conf_model")
+        d = cdf[cdf["key"] == mk].melt(["target"], ["One label", "Both labels", "No label"], var_name="set", value_name="share")
+        d["level"] = d["target"].map(lambda v: f"{v:.0%}")
+        sets = alt.Chart(d).mark_bar(width=alt.RelativeBandSize(0.7)).encode(
+            x=alt.X("level:O", title="Target coverage", axis=alt.Axis(labelAngle=0)),
+            y=alt.Y("share:Q", title="Share of hold-out passengers", axis=alt.Axis(format="%"), stack="normalize"),
+            color=alt.Color("set:N", scale=alt.Scale(domain=["One label", "Both labels", "No label"],
+                                                     range=["#2e3541", ui.ACCENT, ui.BAD]), legend=ui.bottom_legend()),
+            order=alt.Order("order:Q"),
+            tooltip=["level", "set", alt.Tooltip("share:Q", format=".1%")]
+        ).transform_calculate(order="datum.set == 'One label' ? 0 : datum.set == 'Both labels' ? 1 : 2")
+        st.altair_chart(ui.themed(sets.properties(height=230, title="What the prediction set looks like")),
+                        width="stretch")
+    st.caption("The guarantee is marginal: over many passengers the set contains the true outcome at least as often "
+               "as the target. Below about 95% some passengers get no label at all (the model is not sure enough of "
+               "either outcome); at high targets more passengers get both labels. Either way they go to a human.")
 
 with tab_fair:
     c1, c2, c3 = st.columns(3)
@@ -90,7 +100,7 @@ with tab_fair:
         color=alt.Color("group:N", legend=None,
                         scale=alt.Scale(range=["#5ab0ff", ui.ACCENT, "#c792ea", ui.GOOD, "#ff8c42"])),
         column=alt.Column("metric:N", title=None, sort=["accuracy", "false alarm rate", "missed unhappy rate"],
-                          header=alt.Header(labelColor="#e9eef6", labelFont="Instrument Sans", labelFontSize=13,
+                          header=alt.Header(labelColor="#e4e8ee", labelFont="Instrument Sans", labelFontSize=13,
                                             labelFontWeight=600, labelAnchor="start", labelAlign="left")),
         tooltip=["group", "metric", alt.Tooltip("value:Q", format=".2%")]).properties(height=28 * n_groups + 10, width=250).resolve_scale(x="independent")
     # fixed-width facets (3 x 250px) scroll inside their own box on narrow screens instead of the page
@@ -101,18 +111,18 @@ with tab_fair:
 with tab_mono:
     mono = trust["mono"]
     m = ui.load_metrics()["models"]
-    st.markdown("**Rule:** a better service rating should never make a passenger *less* likely to be satisfied. "
+    st.markdown("**Rule:** a better service rating should never make a passenger less likely to be satisfied. "
                   "We test it by adding +1 star to each service for 1,500 hold-out passengers.")
     mdf = pd.DataFrame([{"model": ui.mname(k), "key": k, "violations": v, "accuracy": m.get(k, {}).get("Accuracy", np.nan)}
                         for k, v in mono.items() if k != "team"])
     a, b = st.columns(2)
     vbase = alt.Chart(mdf).encode(y=alt.Y("model:N", sort="-x", title=None))
     vbars = vbase.mark_bar(cornerRadiusEnd=3, height=18).encode(
-        x=alt.X("violations:Q", axis=alt.Axis(format="%"), title="+1 star lowered P(satisfied) by >0.5 pts"),
+        x=alt.X("violations:Q", axis=alt.Axis(format="%"), scale=alt.Scale(domain=[0, float(mdf["violations"].max()) * 1.18]), title="+1 star lowered P(satisfied) by >0.5 pts"),
         color=alt.condition("datum.violations == 0", alt.value(ui.GOOD), alt.value(ui.BAD)))
     vtext = vbase.mark_text(align="left", dx=5, font="JetBrains Mono", fontSize=11).encode(
         x="violations:Q", text=alt.Text("violations:Q", format=".1%"),
-        color=alt.condition("datum.violations == 0", alt.value(ui.GOOD), alt.value("#e9eef6")))
+        color=alt.condition("datum.violations == 0", alt.value(ui.GOOD), alt.value("#e4e8ee")))
     a.altair_chart(ui.themed((vbars + vtext).properties(height=260, title="Monotonicity violations")), width="stretch")
     lo = float(np.nanmin(mdf["accuracy"])) - 0.01 if mdf["accuracy"].notna().any() else 0.9
     acc = mdf.dropna(subset=["accuracy"]).assign(base=lo)  # bars start at the axis minimum, not at 0

@@ -32,84 +32,95 @@ def _artifact_dir() -> Path:
 ART = _artifact_dir()
 EXP_DIR = ART / "experiments"
 
-GOOD, BAD, ACCENT, MUTED = "#3ddc97", "#ff5d5d", "#ffb627", "#8a9bb4"
-MODEL_COLORS = {"knn": "#5ab0ff", "svm": "#c792ea", "mlp": "#3ddc97", "xgb": "#ffb627",
-                "rule": "#8a9bb4", "dummy": "#4a5a73", "xgb_mono": "#ff8c42"}
+GOOD, BAD, ACCENT, MUTED = "#4cc38a", "#e8675d", "#f0b43c", "#6f7987"
+TEXT, TEXT2, BG = "#e4e8ee", "#a7b0bd", "#0e1218"
+MODEL_COLORS = {"knn": "#5ab0ff", "svm": "#c792ea", "mlp": "#3ddc97", "xgb": "#f0b43c",
+                "rule": "#8b95a3", "dummy": "#4a5a73", "xgb_mono": "#ff8c42"}
 
 CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap');
-:root { --bg:#0b1220; --panel:#121c2e; --line:#22314a; --text:#e9eef6; --muted:#8a9bb4;
-        --accent:#ffb627; --good:#3ddc97; --bad:#ff5d5d; }
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Night-shift operations room: graphite neutrals with a faint blue cast, one runway-amber accent.
+   Spacing on a 4px grid; radius 8 for controls, 12 for cards. */
+:root { --bg:#0e1218; --panel:#151a22; --raised:#1b212b; --line:rgba(214,222,235,.09); --line-strong:rgba(214,222,235,.16);
+        --text:#e4e8ee; --text-2:#a7b0bd; --muted:#6f7987;
+        --accent:#f0b43c; --good:#4cc38a; --bad:#e8675d; }
 html, body, .stMarkdown, p, label, input, textarea, button, [data-baseweb="select"] div { font-family:'Instrument Sans',sans-serif; }
 [data-testid="stIconMaterial"] { font-family:'Material Symbols Rounded' !important; }
-h1, h2, h3, h4 { font-family:'Big Shoulders Display',sans-serif !important; letter-spacing:.02em; text-transform:uppercase; }
-.stApp { background:
-   radial-gradient(1200px 500px at 85% -10%, rgba(255,182,39,.07), transparent 60%),
-   repeating-linear-gradient(90deg, rgba(255,255,255,.018) 0 1px, transparent 1px 80px), var(--bg); }
-[data-testid="stSidebar"] { background:#0e1729; border-right:1px solid var(--line); }
-.mono { font-family:'JetBrains Mono',monospace; }
+h1, h2, h3, h4 { font-family:'Instrument Sans',sans-serif !important; font-weight:500 !important; letter-spacing:0; text-transform:none; }
+.stApp { background:var(--bg); }
+[data-testid="stSidebar"] { background:#11161d; border-right:1px solid var(--line); }
+.mono { font-family:'JetBrains Mono',monospace; font-variant-numeric:tabular-nums; }
 
-/* Page header: departure-board strip */
-.board { display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; flex-wrap:wrap;
-         border-bottom:1px solid var(--line); padding-bottom:.8rem; margin-bottom:1.2rem; }
-.board .code { font-family:'JetBrains Mono',monospace; color:var(--accent); font-size:.8rem; letter-spacing:.25em; }
-.board h1 { margin:0; padding:0; font-size:2.6rem; line-height:1; }
-.board .sub { color:var(--muted); font-size:.92rem; max-width:44ch; }
+/* Page header */
+.board { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap;
+         border-bottom:1px solid var(--line); padding-bottom:16px; margin-bottom:24px; }
+.board h1 { margin:0; padding:0; font-size:1.9rem; line-height:1.15; color:var(--text); }
+.board .sub { color:var(--text-2); font-size:.92rem; line-height:1.5; max-width:52ch; }
+.brand { padding:4px 0 0; }
+.brand .name { font-size:1.05rem; font-weight:500; color:var(--text); }
+.brand .meta { font-family:'JetBrains Mono',monospace; font-size:.72rem; color:var(--muted); margin-top:4px; line-height:1.5; }
 
-/* Split-flap verdict */
-.flaps { display:flex; gap:4px; flex-wrap:wrap; margin:.2rem 0 .6rem; }
-.flap { width:2.1rem; height:2.9rem; display:grid; place-items:center; border-radius:4px;
-        font-family:'JetBrains Mono',monospace; font-weight:600; font-size:1.6rem;
-        background:linear-gradient(#18243a 49%, #0c1424 50%, #141f33); box-shadow:inset 0 0 0 1px #24344f;
-        animation:flip .45s cubic-bezier(.3,1.4,.6,1) both; transform-origin:50% 50%; }
+/* Split-flap verdict: the one signature detail, used only for the verdict */
+.flaps { display:flex; gap:4px; flex-wrap:wrap; margin:4px 0 12px; }
+.flap { width:2rem; height:2.8rem; display:grid; place-items:center; border-radius:4px;
+        font-family:'JetBrains Mono',monospace; font-weight:500; font-size:1.5rem;
+        background:linear-gradient(#1d232d 49%, #161b23 50%); box-shadow:inset 0 0 0 1px var(--line-strong);
+        animation:flip .32s cubic-bezier(.2,.7,.2,1) both; }
 .flap.good { color:var(--good); } .flap.bad { color:var(--bad); }
-@keyframes flip { from { transform:rotateX(90deg); opacity:0 } to { transform:rotateX(0); opacity:1 } }
+@keyframes flip { from { transform:rotateX(70deg); opacity:0 } to { transform:none; opacity:1 } }
 
-/* Model cards (boarding-pass stubs) */
-.cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:.7rem; }
-.card { position:relative; background:var(--panel); border:1px solid var(--line); border-radius:10px;
-        padding:.8rem .9rem .75rem; overflow:hidden; animation:rise .5s ease both; }
-.card::after { content:""; position:absolute; right:-9px; top:50%; width:18px; height:18px; border-radius:50%;
-               background:var(--bg); border:1px solid var(--line); transform:translateY(-50%); }
-.card.base { border-style:dashed; opacity:.82; }
-.card.team { border-color:var(--accent); box-shadow:0 0 0 1px rgba(255,182,39,.25), 0 10px 30px -12px rgba(255,182,39,.35); }
-.card .role { font-family:'JetBrains Mono',monospace; font-size:.66rem; letter-spacing:.18em; color:var(--muted); text-transform:uppercase; }
-.card .name { font-family:'Big Shoulders Display',sans-serif; font-size:1.25rem; font-weight:800; text-transform:uppercase; }
-.card .pct { font-family:'JetBrains Mono',monospace; font-size:1.7rem; font-weight:600; line-height:1.1; }
-.card .bar { height:6px; border-radius:3px; background:#1d2a41; margin:.45rem 0 .4rem; overflow:hidden; }
-.card .bar > i { display:block; height:100%; border-radius:3px; }
-.chip { display:inline-block; font-family:'JetBrains Mono',monospace; font-size:.68rem; letter-spacing:.08em;
-        padding:.12rem .45rem; border-radius:99px; border:1px solid; }
-.chip.good { color:var(--good); border-color:rgba(61,220,151,.4); } .chip.bad { color:var(--bad); border-color:rgba(255,93,93,.4); }
-@keyframes rise { from { transform:translateY(8px); opacity:0 } to { transform:none; opacity:1 } }
+/* Model cards */
+.cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(168px,1fr)); gap:12px; }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; }
+.card.base { background:transparent; border-style:dashed; }
+.card.lead { border-color:rgba(240,180,60,.55); }
+.card .role { font-size:.75rem; color:var(--muted); }
+.card .name { font-size:1rem; font-weight:500; color:var(--text); margin-top:2px; }
+.card .pct { font-family:'JetBrains Mono',monospace; font-variant-numeric:tabular-nums; font-size:1.6rem; font-weight:500;
+             line-height:1.2; margin-top:8px; }
+.card .bar { height:4px; border-radius:2px; background:var(--raised); margin:8px 0; overflow:hidden; }
+.card .bar > i { display:block; height:100%; border-radius:2px; }
+.chip { font-family:'JetBrains Mono',monospace; font-size:.75rem; color:var(--text-2); }
+.chip.good { color:var(--good); } .chip.bad { color:var(--bad); }
 
-.note { border-left:3px solid var(--accent); background:rgba(255,182,39,.06); padding:.55rem .8rem;
-        border-radius:0 6px 6px 0; color:#d8dfeb; font-size:.9rem; margin:.4rem 0 .8rem; }
-.note.warn { border-color:var(--bad); background:rgba(255,93,93,.07); }
-.step { display:flex; gap:.7rem; align-items:center; padding:.45rem 0; border-bottom:1px dashed var(--line); }
-.step .n { font-family:'JetBrains Mono',monospace; color:var(--accent); width:1.6rem; }
-.kpi { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:.7rem .9rem;
-       min-height:5.2rem; height:100%; display:flex; flex-direction:column; justify-content:space-between; min-width:0; }
-.kpi .l { font-family:'JetBrains Mono',monospace; font-size:.68rem; letter-spacing:.15em; color:var(--muted);
-          text-transform:uppercase; line-height:1.35; }
-.kpi .v { font-family:'JetBrains Mono',monospace; font-size:clamp(1rem, 1.45vw, 1.5rem); font-weight:600;
-          white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.kpi .s { font-size:.74rem; color:var(--muted); margin-top:.15rem; line-height:1.3; }
+.note { border:1px solid var(--line); border-left:2px solid var(--muted); background:var(--panel); padding:12px 16px;
+        border-radius:8px; color:var(--text-2); font-size:.9rem; line-height:1.5; margin:4px 0 16px; }
+.note b { color:var(--text); font-weight:500; }
+.note.warn { border-left-color:var(--bad); }
+.step { display:flex; gap:12px; align-items:center; padding:8px 0; border-bottom:1px solid var(--line); }
+.step .n { font-family:'JetBrains Mono',monospace; color:var(--muted); width:1.6rem; }
+.kpi { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px;
+       min-height:5.5rem; height:100%; display:flex; flex-direction:column; justify-content:space-between; gap:8px; min-width:0; }
+.kpi .l { font-size:.8rem; color:var(--text-2); line-height:1.35; }
+.kpi .v { font-family:'JetBrains Mono',monospace; font-variant-numeric:tabular-nums; font-size:clamp(1.05rem, 1.5vw, 1.5rem);
+          font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.kpi .s { font-size:.76rem; color:var(--muted); margin-top:4px; line-height:1.35; }
 
-/* Tabs: make section switching obvious during a demo */
-[data-baseweb="tab-list"] { gap:.4rem; border-bottom:1px solid var(--line); }
-[data-baseweb="tab"] { padding:.35rem .7rem !important; border-radius:6px 6px 0 0; }
-[data-baseweb="tab"] p { font-size:.95rem !important; font-weight:600; }
-[data-baseweb="tab"][aria-selected="true"] { background:rgba(255,182,39,.08); }
-[data-baseweb="tab"][aria-selected="true"] p { color:var(--accent); }
+/* Tabs: quiet underline, accent only on the selected label */
+[data-baseweb="tab-list"] { gap:16px; border-bottom:1px solid var(--line); }
+[data-baseweb="tab"] { padding:8px 0 !important; background:transparent !important; }
+[data-baseweb="tab"] p { font-size:.95rem !important; font-weight:500; color:var(--text-2); }
+[data-baseweb="tab"][aria-selected="true"] p { color:var(--text); }
+[data-baseweb="tab-highlight"] { background-color:var(--accent) !important; height:2px !important; }
 
-/* Chart / section headings: tighter, consistent rhythm */
-h4 { font-size:1.15rem !important; margin-top:.6rem !important; color:#cfd8e6; }
-.step-head { display:flex; gap:.7rem; padding:.2rem 0 .35rem; border-bottom:1px solid var(--line);
-             font-family:'JetBrains Mono',monospace; font-size:.66rem; letter-spacing:.14em;
-             color:var(--muted); text-transform:uppercase; }
+/* Multiselect tags: neutral, not accent-filled */
+[data-baseweb="tag"] { background:var(--raised) !important; border:1px solid var(--line-strong) !important; border-radius:6px !important; }
+[data-baseweb="tag"] span { color:var(--text) !important; }
+
+/* Section headings */
+h4 { font-size:1.05rem !important; margin-top:8px !important; color:var(--text); }
+h3 { font-size:1.2rem !important; }
+.step-head { display:flex; gap:12px; padding:4px 0 8px; border-bottom:1px solid var(--line);
+             font-size:.78rem; color:var(--muted); }
 .step .n, .step-head .n { min-width:2.4rem; white-space:nowrap; }
+
+/* Plain HTML tables (overview): wrap text instead of clipping */
+.table-wrap table { width:100%; border-collapse:collapse; font-size:.88rem; }
+.table-wrap th { text-align:left; font-weight:500; color:var(--text-2); padding:8px 12px; border-bottom:1px solid var(--line-strong); }
+.table-wrap td { padding:8px 12px; border-bottom:1px solid var(--line); color:var(--text); vertical-align:top; line-height:1.45; }
+.table-wrap td.num { text-align:right; font-family:'JetBrains Mono',monospace; font-variant-numeric:tabular-nums; }
+.table-wrap td.where { color:var(--text-2); }
 
 /* Buttons show their full label (wrap) instead of an ellipsis */
 .stButton button .stMarkdownEllipsis, .stButton button .stMarkdownEllipsis p,
@@ -128,9 +139,9 @@ h4 { font-size:1.15rem !important; margin-top:.6rem !important; color:#cfd8e6; }
 .st-key-fair_chart { overflow-x:auto; max-width:100%; }
 
 @media (max-width: 1100px) {
-  .board h1 { font-size:2rem; }
-  .flap { width:1.7rem; height:2.4rem; font-size:1.3rem; }
-  .cards { grid-template-columns:repeat(auto-fill,minmax(145px,1fr)); }
+  .board h1 { font-size:1.6rem; }
+  .flap { width:1.6rem; height:2.3rem; font-size:1.2rem; }
+  .cards { grid-template-columns:repeat(auto-fill,minmax(144px,1fr)); }
 }
 </style>
 """
@@ -141,10 +152,9 @@ def setup_page():
     st.markdown(CSS, unsafe_allow_html=True)
 
 
-def header(code: str, title: str, sub: str):
-    """Departure-board style page header: gate code, title and subtitle."""
-    st.markdown(f'<div class="board"><div><div class="code">{code}</div><h1>{title}</h1></div>'
-                f'<div class="sub">{sub}</div></div>', unsafe_allow_html=True)
+def header(title: str, sub: str):
+    """Page header: title on the left, one-sentence purpose on the right."""
+    st.markdown(f'<div class="board"><h1>{title}</h1><div class="sub">{sub}</div></div>', unsafe_allow_html=True)
 
 
 def note(text: str, warn: bool = False):
@@ -349,12 +359,12 @@ def model_card(key_: str, p: float, threshold: float = 0.5) -> str:
     """HTML card with one model's probability and verdict."""
     info = MODEL_INFO[key_]
     good = p >= threshold
-    kind = "base" if key_ in BASELINES else ("team" if key_ == HEADLINE else "")
+    kind = "base" if key_ in BASELINES else ("lead" if key_ == HEADLINE else "")
     color = GOOD if good else BAD
     return (f'<div class="card {kind}"><div class="role">{info["role"]}</div><div class="name">{info["name"]}</div>'
             f'<div class="pct" style="color:{color}">{p*100:.1f}%</div>'
             f'<div class="bar"><i style="width:{p*100:.1f}%;background:{color}"></i></div>'
-            f'<span class="chip {"good" if good else "bad"}">{"SATISFIED" if good else "DISSATISFIED"}</span></div>')
+            f'<span class="chip {"good" if good else "bad"}">{"Satisfied" if good else "Dissatisfied"}</span></div>')
 
 
 def cards_html(probs: pd.Series, order=None) -> str:
@@ -363,11 +373,29 @@ def cards_html(probs: pd.Series, order=None) -> str:
     return '<div class="cards">' + "".join(model_card(k, float(probs[k])) for k in order if k in probs) + "</div>"
 
 
-def kpi(label: str, value: str, color: str = "#e9eef6", sub: str = "") -> str:
+def kpi(label: str, value: str, color: str = TEXT, sub: str = "") -> str:
     """Stat tile. `sub` is an optional one-line plain-language explanation under the value."""
     s = f'<div class="s">{sub}</div>' if sub else ""
     return (f'<div class="kpi"><div class="l">{label}</div><div><div class="v" style="color:{color}" title="{value}">'
             f'{value}</div>{s}</div></div>')
+
+
+def html_table(df: pd.DataFrame, num=(), muted=(), fmt=None) -> str:
+    """Plain HTML table whose cells wrap (st.dataframe clips long text). `num` columns align right in mono,
+    `muted` columns use the secondary text colour, `fmt` maps a column to a format string."""
+    import html as _h
+    fmt = fmt or {}
+    head = "".join(f"<th{' style=\"text-align:right\"' if c in num else ''}>{_h.escape(str(c))}</th>" for c in df.columns)
+    body = ""
+    for _, r in df.iterrows():
+        cells = ""
+        for c in df.columns:
+            v = r[c]
+            txt = fmt[c].format(v) if c in fmt and pd.notna(v) else ("-" if pd.isna(v) else str(v))
+            cls = "num" if c in num else ("where" if c in muted else "")
+            cells += f'<td class="{cls}">{_h.escape(txt)}</td>'
+        body += f"<tr>{cells}</tr>"
+    return f'<div class="table-wrap"><table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>'
 
 
 def step_head(*cols: tuple[str, str]) -> str:
@@ -399,15 +427,15 @@ def themed(chart: alt.Chart) -> alt.Chart:
         chart = chart.properties(autosize=alt.AutoSizeParams(type="fit-x", contains="padding"))
     return (chart.configure(background="transparent", font="Instrument Sans")
             .configure_view(stroke=None)
-            .configure_axis(labelColor="#aab7cb", titleColor=MUTED, gridColor="#1b2740", domainColor="#22314a",
+            .configure_axis(labelColor=TEXT2, titleColor=TEXT2, gridColor="#1c222b", domainColor="#2a313c",
                             labelFont="JetBrains Mono", titleFont="Instrument Sans", labelLimit=260,
                             labelFontSize=11, titleFontSize=12, titlePadding=10)
             .configure_axisBand(labelOverlap=False)
             .configure_axisX(labelAngle=0)
-            .configure_title(color="#e9eef6", font="Instrument Sans", fontSize=14, fontWeight=600,
+            .configure_title(color=TEXT, font="Instrument Sans", fontSize=14, fontWeight=500,
                              anchor="start", offset=12)
-            .configure_header(labelColor="#e9eef6", titleColor=MUTED, labelFont="JetBrains Mono")
-            .configure_legend(labelColor="#e9eef6", titleColor=MUTED, labelFont="Instrument Sans", labelFontSize=12,
+            .configure_header(labelColor=TEXT, titleColor=TEXT2, labelFont="Instrument Sans")
+            .configure_legend(labelColor=TEXT2, titleColor=TEXT2, labelFont="Instrument Sans", labelFontSize=12,
                               labelLimit=320, symbolSize=110, columnPadding=18, rowPadding=6, padding=6))
 
 
@@ -417,7 +445,7 @@ def bottom_legend(columns: int | None = None, **kw) -> alt.Legend:
 
 
 # Six display metrics -> six distinct colours (Accuracy, Recall, Precision, F1, ROC-AUC, MCC)
-METRIC_COLORS = ["#ffb627", "#3ddc97", "#5ab0ff", "#c792ea", "#ff8c42", "#e9eef6"]
+METRIC_COLORS = ["#f0b43c", "#3ddc97", "#5ab0ff", "#c792ea", "#ff8c42", "#e4e8ee"]
 
 
 def color_scale(keys):

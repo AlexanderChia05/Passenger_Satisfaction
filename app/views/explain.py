@@ -4,7 +4,7 @@ import streamlit as st
 import ui
 from ui import C
 
-ui.header("GATE 06 · INSIGHT", "Explain the models",
+ui.header("Explain the models",
           "What drives satisfaction for different passenger groups, and the XGBoost model distilled into "
             "plain IF-THEN rules a manager can read.")
 
@@ -65,17 +65,17 @@ with tab_seg:
         ui.note(("<b>{a}</b> matters much more for {s1}; <b>{b}</b> matters more for {s2}. "
                   "Different segments need different service priorities.").format(a=diff.index[-1], s1=s1, b=diff.index[0], s2=s2))
 
-    st.markdown(f"#### {'Driver heatmap across all segments'}")
+    st.markdown("#### Driver heatmap across all segments")
     heat_cols = imp.mean().sort_values(ascending=False).head(12).index.tolist()
     hl = imp.loc[valid, heat_cols].reset_index(names="segment").melt("segment", var_name="feature", value_name="impact")
     heat = alt.Chart(hl).mark_rect(cornerRadius=3).encode(
         x=alt.X("feature:N", sort=heat_cols, title=None, axis=alt.Axis(labelAngle=-35)),
         y=alt.Y("segment:N", title=None),
-        color=alt.Color("impact:Q", scale=alt.Scale(scheme="goldorange"),
-                        legend=alt.Legend(orient="right", title="Impact", gradientLength=120)),
+        color=alt.Color("impact:Q", scale=alt.Scale(range=["#1b212b", "#f0b43c"], interpolate="rgb"),
+                        legend=alt.Legend(orient="right", title="Mean |SHAP|", gradientLength=120)),
         tooltip=["segment", "feature", alt.Tooltip("impact:Q", format=".3f")]).properties(height=36 * len(valid))
     st.altair_chart(ui.themed(heat), width="stretch")
-    st.caption("Darker cell = that feature moves the prediction more for that segment (mean |SHAP|).")
+    st.caption("Brighter cell = that feature moves the prediction more for that segment (mean |SHAP|).")
 
 with tab_rules:
     sur = ui.load_trust()["surrogates"]
@@ -95,13 +95,13 @@ with tab_rules:
     for i, r in s["rules"].iterrows():
         sat = r["prediction"] == "Satisfied"
         color = ui.GOOD if sat else ui.BAD
-        conds = f" <span style='color:#ffb627'>{'AND'}</span> ".join(
+        conds = " <span style='color:#8b95a3'>and</span> ".join(
             ui.translate_condition(c) for c in simplify_rule(r["rule"].split(" AND ")))
-        html += (f'<div class="step"><span class="n">R{i+1:02d}</span><span style="flex:1"><span style="color:#8a9bb4">'
-                 f'{"IF"}</span> {conds}</span>'
+        html += (f'<div class="step"><span class="n">R{i+1:02d}</span><span style="flex:1"><span style="color:#8b95a3">'
+                 f'If</span> {conds}</span>'
                  f'<span style="width:8.5rem;text-align:center"><span class="chip {"good" if sat else "bad"}">'
-                 f'{"SATISFIED" if sat else "DISSATISFIED"}</span></span>'
+                 f'{"Satisfied" if sat else "Dissatisfied"}</span></span>'
                  f'<span class="mono" style="width:7rem;text-align:right;color:{color}">{r["confidence"]*100:.0f}%</span>'
-                 f'<span class="mono" style="width:9rem;text-align:right;color:#8a9bb4">{r["support %"]:.1f}%</span></div>')
+                 f'<span class="mono" style="width:9rem;text-align:right;color:#8b95a3">{r["support %"]:.1f}%</span></div>')
     # fixed-width columns: scroll inside the box on phones instead of widening the page
     st.markdown(f'<div style="overflow-x:auto">{html}</div>', unsafe_allow_html=True)

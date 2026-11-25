@@ -5,13 +5,13 @@ import streamlit as st
 
 import ui
 
-ui.header("GATE 08 · EVIDENCE", "Experiment lab",
+ui.header("Experiment lab",
           "Part A and Part B results from the automated pipeline: cross-validation, tuning, missing values, "
             "feature selection, statistical tests, learning curves and robustness.")
 
 OWNERS = ["Member 1", "Member 2", "Member 3", "Member 4"]
 OWNER_COLORS = {"Baseline": "#4a5a73", "Member 1": "#5ab0ff", "Member 2": "#c792ea", "Member 3": "#3ddc97",
-                "Member 4": "#ffb627", "Shared": "#8a9bb4"}
+                "Member 4": "#f0b43c", "Shared": "#8b95a3"}
 KEY_OWNER = {"knn": "Member 1", "svm": "Member 2", "mlp": "Member 3", "xgb": "Member 4"}
 
 
@@ -47,14 +47,23 @@ def owner_scale():
     return alt.Scale(domain=[o for o in OWNER_COLORS], range=list(OWNER_COLORS.values()))
 
 
+COLUMN_NAMES = {"model": "Model", "owner": "Owner", "stage": "Stage", "F1_std": "F1 std", "fit_s": "Fit (s)",
+                "predict_ms_per_row": "Predict (ms/row)", "model_family": "Model family", "strategy": "Strategy",
+                "rows_used": "Rows used", "chi2": "Chi-square", "p_value": "p-value", "mean_diff": "Mean difference",
+                "verdict": "Verdict"}
+
+
 def localise(df):
-    """Translate owner / model / stage values for display."""
-    return df
+    """Readable column names for display tables."""
+    return df.rename(columns=COLUMN_NAMES)
 
 
 def metric_bars(df, metric="F1", height_per=26):
-    """Horizontal bars of a CV metric per model with a +/- 1 std whisker."""
-    d = localise(df)
+    """Horizontal bars of a CV metric per model with a +/- 1 std whisker.
+
+    The Dummy baseline (F1 0, ROC-AUC 0.5) is left out of the chart: on a shared axis it would squash the
+    0.92-0.96 range where the real differences are. It stays in the table under the chart."""
+    d = df[~df["model"].astype(str).str.startswith("Dummy")].copy()
     std = f"{metric}_std"
     d["lo"] = d[metric] - (d[std] if std in d else 0)
     d["hi"] = d[metric] + (d[std] if std in d else 0)
@@ -68,7 +77,7 @@ def metric_bars(df, metric="F1", height_per=26):
         x2="base:Q",
         color=alt.Color("owner:N", scale=owner_scale(), legend=alt.Legend(orient="bottom", title=None)),
         tooltip=["model", "owner", alt.Tooltip(f"{metric}:Q", format=".4f")])
-    chart = bars + base.mark_rule(color="#e9eef6").encode(x="lo:Q", x2="hi:Q") if std in d else bars
+    chart = bars + base.mark_rule(color="#e4e8ee").encode(x="lo:Q", x2="hi:Q") if std in d else bars
     return ui.themed(chart.properties(height=max(120, height_per * len(d))))
 
 
@@ -83,9 +92,9 @@ def training_monitor():
     now = time.time()
     status = overall["status"]
     with st.container(border=True):
-        st.markdown(f"#### {'Training monitor'}")
+        st.markdown("#### Training monitor")
         k = st.columns(3)
-        k[0].markdown(ui.kpi("Status", status.upper(), ui.ACCENT if status == "running" else
+        k[0].markdown(ui.kpi("Status", status.capitalize(), ui.ACCENT if status == "running" else
                              (ui.GOOD if status == "done" else ui.BAD)), unsafe_allow_html=True)
         k[1].markdown(ui.kpi("Elapsed", fmt_secs((overall["finished"] or now) - overall["started"])), unsafe_allow_html=True)
         k[2].markdown(ui.kpi("Remaining (estimate)", fmt_secs(overall.get("eta_s")) if status == "running" else "-"),
@@ -145,19 +154,19 @@ def convergence_chart(t: pd.DataFrame, key: str) -> alt.Chart:
     tip = [alt.Tooltip("number:Q", title="Trial"), alt.Tooltip("value:Q", title="F1", format=".4f"), "Trial:N"]
     dots = alt.Chart(t.dropna(subset=["value"])).mark_point(size=46, strokeWidth=1.5).encode(
         x=x, y=y, tooltip=tip,
-        color=alt.value("#8a9bb4"),
-        fill=alt.Fill("Trial:N", scale=alt.Scale(domain=["Completed", "Pruned early"], range=["#8a9bb4", "transparent"]),
+        color=alt.value("#8b95a3"),
+        fill=alt.Fill("Trial:N", scale=alt.Scale(domain=["Completed", "Pruned early"], range=["#8b95a3", "transparent"]),
                       legend=ui.bottom_legend()),
         opacity=alt.value(0.75))
     line = alt.Chart(done).mark_line(interpolate="step-after", strokeWidth=2.5, color=color).encode(
         x="number:Q", y=alt.Y("best:Q"))
     rule = alt.Chart(pd.DataFrame([{"v": default, "t": f"default {default:.4f}"}])).mark_rule(
-        strokeDash=[5, 4], color="#e9eef6", opacity=.7).encode(y="v:Q")
+        strokeDash=[5, 4], color="#e4e8ee", opacity=.7).encode(y="v:Q")
     rule_txt = alt.Chart(pd.DataFrame([{"v": default, "t": f"default (trial 0) {default:.4f}", "x": int(t["number"].max())}])
-                         ).mark_text(align="right", dy=10, fontSize=11, color="#aab7cb").encode(x="x:Q", y="v:Q", text="t:N")
-    star = alt.Chart(best).mark_point(shape="diamond", size=170, filled=True, color=color, stroke="#0b1220",
+                         ).mark_text(align="right", dy=10, fontSize=11, color="#a7b0bd").encode(x="x:Q", y="v:Q", text="t:N")
+    star = alt.Chart(best).mark_point(shape="diamond", size=170, filled=True, color=color, stroke="#0e1218",
                                       strokeWidth=1.5).encode(x="number:Q", y="best:Q")
-    star_txt = alt.Chart(best).mark_text(dy=-14, fontSize=11, fontWeight=600, color="#e9eef6").encode(
+    star_txt = alt.Chart(best).mark_text(dy=-14, fontSize=11, fontWeight=600, color="#e4e8ee").encode(
         x="number:Q", y="best:Q", text="label:N")
     return (dots + line + rule + rule_txt + star + star_txt).properties(height=250, title=TUNE_NAMES[key])
 
@@ -177,7 +186,7 @@ def before_after(cv: dict, metric: str) -> alt.Chart:
     order = list(gain["Algorithm"])
     x = alt.X("Algorithm:N", sort=order, title=None, axis=alt.Axis(labelFontSize=12, labelLimit=200))
     off = alt.XOffset("Settings:N", sort=["Before", "After"])
-    settings = alt.Scale(domain=["Before", "After"], range=["#8a9bb4", ui.ACCENT])
+    settings = alt.Scale(domain=["Before", "After"], range=["#8b95a3", ui.ACCENT])
     bars = alt.Chart(d).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4).encode(
         x=x, xOffset=off,
         y=alt.Y("value:Q", title=f"{metric} (mean of 5 folds)", scale=alt.Scale(domain=[lo, hi], clamp=True)),
@@ -186,7 +195,7 @@ def before_after(cv: dict, metric: str) -> alt.Chart:
                         legend=ui.bottom_legend(labelExpr="datum.label == 'Before' ? 'Before tuning (default settings)'"
                                                           " : 'After tuning (Optuna best)'")),
         tooltip=["Algorithm", "Settings", alt.Tooltip("value:Q", title=metric, format=".4f")])
-    vals = alt.Chart(d).mark_text(dy=-7, fontSize=11, color="#aab7cb", font="JetBrains Mono").encode(
+    vals = alt.Chart(d).mark_text(dy=-7, fontSize=11, color="#a7b0bd", font="JetBrains Mono").encode(
         x=x, xOffset=off, y="value:Q", text=alt.Text("value:Q", format=".4f"))
     gains = alt.Chart(gain).mark_text(dy=-10, fontSize=13, fontWeight=700, color=ui.GOOD).encode(
         x=x, y=alt.Y("top:Q"), text="label:N")
@@ -256,7 +265,7 @@ def tuning_tab(trials: pd.DataFrame, params: pd.DataFrame | None):
         x=xe, y=alt.Y("value:Q", title="Inner-CV F1", scale=alt.Scale(zero=False)),
         size=alt.Size("Selected:N", scale=alt.Scale(domain=["Other trials", "Selected"], range=[60, 260]), legend=None),
         color=alt.Color("Selected:N", scale=alt.Scale(domain=["Other trials", "Selected"],
-                                                      range=["#8a9bb4", ui.MODEL_COLORS[k]]), legend=ui.bottom_legend()),
+                                                      range=["#8b95a3", ui.MODEL_COLORS[k]]), legend=ui.bottom_legend()),
         tooltip=[alt.Tooltip("number:Q", title="Trial"), alt.Tooltip(f"{p}:{'Q' if numeric else 'N'}"),
                  alt.Tooltip("value:Q", title="F1", format=".4f"), "state"])
     st.altair_chart(ui.themed(sc.properties(height=280)), width="stretch")
@@ -278,19 +287,20 @@ with tabs[0]:
     else:
         df = focus(pd.concat(parts, ignore_index=True))
         st.markdown("Default settings, identical stratified K-fold CV on the full training set. "
-                      "Bars = mean, white line = ± 1 std across folds.")
+                      "Bars = mean, whisker = ± 1 std across folds.")
         metric = st.selectbox("Metric", ui.METRICS, index=ui.METRICS.index("F1"), key="pa_metric")
         st.altair_chart(metric_bars(df, metric), width="stretch")
         cols = ["model", "owner", "stage", *ui.METRICS, "F1_std", "fit_s", "predict_ms_per_row"]
-        st.dataframe(localise(df[cols].sort_values("F1", ascending=False)).style.format(precision=4),
+        st.dataframe(localise(df[cols].sort_values("F1", ascending=False)).style.format(
+                     {**{c: "{:.4f}" for c in [*ui.METRICS, "F1 std"]}, "Fit (s)": "{:.1f}", "Predict (ms/row)": "{:.3f}"}),
                      hide_index=True, width="stretch")
         folds = load("folds_partA.csv")
         if folds is not None:
-            folds = localise(focus(folds))
+            folds = focus(folds)
             box = alt.Chart(folds).mark_boxplot(size=18).encode(
                 x=alt.X("F1:Q", scale=alt.Scale(zero=False)), y=alt.Y("model:N", title=None),
                 color=alt.Color("owner:N", scale=owner_scale(), legend=None))
-            st.markdown(f"#### {'Fold-to-fold stability'}")
+            st.markdown("#### Fold-to-fold stability")
             st.altair_chart(ui.themed(box.properties(height=30 * folds["model"].nunique())), width="stretch")
 
 with tabs[1]:
@@ -310,8 +320,9 @@ with tabs[1]:
             color=alt.Color("model_family:N", scale=alt.Scale(range=[ui.ACCENT, "#5ab0ff"]), title=None),
             yOffset="model_family:N", tooltip=["model", alt.Tooltip("F1:Q", format=".4f"), "rows_used"])
         st.altair_chart(ui.themed(ch.properties(height=260)), width="stretch")
-        st.dataframe(df[["model_family", "strategy", "rows_used", *ui.METRICS, "F1_std"]]
-                     .style.format(precision=4), hide_index=True, width="stretch")
+        st.dataframe(localise(df[["model_family", "strategy", "rows_used", *ui.METRICS, "F1_std"]])
+                     .style.format({**{c: "{:.4f}" for c in [*ui.METRICS, "F1 std"]}, "Rows used": "{:,.0f}"}), hide_index=True,
+                     width="stretch")
 
 with tabs[2]:
     df, mi = load("cv_features.csv"), load("feature_mi.csv")
@@ -320,13 +331,13 @@ with tabs[2]:
     else:
         a, b = st.columns(2)
         with a:
-            st.markdown(f"#### {'Mutual information ranking'}")
+            st.markdown("#### Mutual information ranking")
             mi = mi.assign(feature=mi["feature"].map(lambda f: ui.FEATURE_LABELS.get(f, f)))
             st.altair_chart(ui.themed(alt.Chart(mi.head(25)).mark_bar(cornerRadiusEnd=3, height=10, color=ui.ACCENT).encode(
                 x=alt.X("mutual_info:Q", title="Mutual information with satisfaction"),
                 y=alt.Y("feature:N", sort="-x", title=None)).properties(height=420)), width="stretch")
         with b:
-            st.markdown(f"#### {'Feature-set ablation (XGBoost)'}")
+            st.markdown("#### Feature-set ablation (XGBoost)")
             st.altair_chart(metric_bars(df), width="stretch")
 
 with tabs[3]:
@@ -356,16 +367,17 @@ with tabs[5]:
     if mc is None:
         missing("analysis")
     else:
-        st.markdown(f"#### {'McNemar test on the hold-out set'}")
+        st.markdown("#### McNemar test on the hold-out set")
         mc = mc.assign(A=mc["A"].map(ui.mname), B=mc["B"].map(ui.mname),
                        verdict=mc["p_value"].map(lambda p: "significant" if p < 0.05 else "not significant"))
-        st.dataframe(mc.style.format({"chi2": "{:.1f}", "p_value": "{:.2g}"}), hide_index=True, width="stretch")
+        st.dataframe(localise(mc).style.format({"Chi-square": "{:.1f}", "p-value": "{:.2g}"}), hide_index=True,
+                     width="stretch")
         if t52 is not None and len(t52):
-            st.markdown(f"#### {'Dietterich 5x2cv paired t-test (F1)'}")
-            st.dataframe(t52.assign(A=t52["A"].map(ui.mname), B=t52["B"].map(ui.mname)).style.format(
-                {"mean_diff": "{:+.4f}", "t": "{:.2f}", "p_value": "{:.3g}"}), hide_index=True, width="stretch")
+            st.markdown("#### Dietterich 5x2cv paired t-test (F1)")
+            st.dataframe(localise(t52.assign(A=t52["A"].map(ui.mname), B=t52["B"].map(ui.mname))).style.format(
+                {"Mean difference": "{:+.4f}", "t": "{:.2f}", "p-value": "{:.3g}"}), hide_index=True, width="stretch")
         if ci is not None:
-            st.markdown(f"#### {'Bootstrap 95% confidence intervals (hold-out)'}")
+            st.markdown("#### Bootstrap 95% confidence intervals (hold-out)")
             metric = st.selectbox("Metric", [m for m in ui.METRICS if m in set(ci["metric"])], key="ci_metric")
             d = ci[ci["metric"] == metric].assign(model=lambda x: x["model"].map(ui.mname))
             order = d.sort_values("value", ascending=False)["model"].tolist()
