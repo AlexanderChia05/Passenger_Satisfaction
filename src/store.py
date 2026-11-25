@@ -32,3 +32,41 @@ def load_variants(out: Path) -> dict:
     for f in sorted(Path(out).glob("variants*.joblib")):
         merged.update(joblib.load(f))
     return merged
+
+
+# Libraries whose versions decide whether the pickled models load and predict identically.
+PINNED = ("scikit-learn", "xgboost", "numpy", "pandas", "scipy", "joblib", "optuna")
+
+
+def environment_info() -> dict:
+    """Python and library versions of the current environment (saved next to the models)."""
+    import platform
+    from importlib.metadata import PackageNotFoundError, version
+    libs = {}
+    for name in PINNED:
+        try:
+            libs[name] = version(name)
+        except PackageNotFoundError:
+            libs[name] = None
+    return {"python": platform.python_version(), "libraries": libs}
+
+
+def save_environment(out: Path, note: str = "") -> None:
+    """Write environment.json beside the trained models."""
+    import json
+    info = environment_info()
+    if note:
+        info["note"] = note
+    (Path(out) / "environment.json").write_text(json.dumps(info, indent=2))
+
+
+def environment_mismatches(out: Path) -> list[str]:
+    """Libraries whose installed version differs from the one recorded with the models (empty = all match)."""
+    import json
+    path = Path(out) / "environment.json"
+    if not path.exists():
+        return []
+    saved = json.loads(path.read_text()).get("libraries", {})
+    now = environment_info()["libraries"]
+    return [f"{k} {now.get(k)} installed, models saved with {v}" for k, v in saved.items() if v and now.get(k) != v]
+

@@ -1,0 +1,13 @@
+{
+  "python": "3.13.13",
+  "libraries": {
+    "scikit-learn": "1.9.1",
+    "xgboost": "3.4.1",
+    "numpy": "2.5.4",
+    "pandas": "3.1.0",
+    "scipy": "1.18.0",
+    "joblib": "1.5.3",
+    "optuna": "5.0.0"
+  },
+  "note": "Recorded after training (run 2026-11-09). Verified: the pickles load without scikit-learn InconsistentVersionWarning and reproduce the saved hold-out predictions with these versions."
+}

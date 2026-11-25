@@ -3,8 +3,10 @@
 BMDS2114 Machine Learning assignment. A Streamlit system that predicts whether an airline passenger
 will be **satisfied** or **neutral / dissatisfied**, compares four members' algorithms (each with an
 ensemble technique) against two baselines, and turns predictions into practical decisions
-(service what-if, budget planning, decision policy). M4 XGBoost is the headline model behind
-single-passenger answers; every page also shows the other members' predictions.
+(service what-if, budget planning, decision policy). M4 XGBoost gives the single-passenger verdict
+and every page also shows the other members' predictions. XGBoost is not the top scorer (MLP ensemble F1
+0.9593 vs 0.9590; McNemar p = 0.70, 5x2cv t-test p = 0.28, not significant): it was chosen because it trains
+about 18x faster, gives exact per-passenger TreeSHAP explanations and has a monotone variant.
 
 Dataset: [Airline Passenger Satisfaction (Kaggle, teejmahal20)](https://www.kaggle.com/datasets/teejmahal20/airline-passenger-satisfaction)
 — `train.csv` 103,904 rows, `test.csv` 25,976 rows (copies in `data/raw/`).
@@ -36,8 +38,16 @@ Always run commands from the project root (not from `app/`), otherwise `No modul
 > Models are split into `models.joblib`, `variants.joblib`, `variants_team.joblib` and `trust.joblib`
 > (each under GitHub's 100 MB limit); the first app start takes ~30 s to decompress them.
 
-Python 3.13 with the library versions in `requirements.txt` (scikit-learn ≥ 1.9, xgboost ≥ 3) is
-required: the pickled models must be loaded with the same major library versions that trained them.
+Use Python 3.13 and the exact versions pinned in `requirements.txt` (scikit-learn 1.9.1, xgboost 3.4.1, ...):
+pickled models are only guaranteed to load and predict identically with the versions that saved them.
+The versions used for training are recorded in `artifacts/full/environment.json`; the app shows a warning in
+the sidebar if the installed versions differ. A virtual environment keeps them separate from other projects:
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate        # macOS / Linux: source .venv/bin/activate
+pip install -r requirements.txt
+```
 
 ## App pages
 
@@ -76,7 +86,7 @@ tests/              pytest suite (features, metrics, conformal, what-if, saved m
 python -m pytest
 ```
 
-29 tests, about 15 s. They cover data loading and validation, leak-free feature engineering, the metrics
+30 tests, about 15 s. They cover data loading and validation, leak-free feature engineering, the metrics
 and statistical tests, the conformal coverage guarantee, the what-if searches, and that the committed
 models still reproduce the saved hold-out predictions.
 

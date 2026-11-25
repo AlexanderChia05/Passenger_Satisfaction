@@ -46,7 +46,7 @@ from src.features import AirlineFeatures, DropColumns, StageMask, load_raw, spli
 from src.members import MEMBERS, m1_knn, m4_tree
 from src.models import RuleBaseline
 from src.progress import Tracker, fmt_secs
-from src.store import load_variants, save_variants
+from src.store import load_variants, save_environment, save_variants
 from src.tuning import best_params_table
 
 STEPS = ["baselines", "partA", "missing", "features", "tune", "final", "team", "holdout", "analysis", "trust"]
@@ -366,6 +366,7 @@ def step_holdout(run):
     (run.out / "metrics.json").write_text(json.dumps({
         "mode": "full", "trained_on_rows": len(run.X), "test_rows": len(run.X_test), "team": team_cfg["chosen"],
         "models": {r["key"]: {k: v for k, v in r.items() if k != "key"} for r in rows}}, indent=2, default=float))
+    save_environment(run.out)  # exact library versions the pickled models need
 
 
 def step_analysis(run):

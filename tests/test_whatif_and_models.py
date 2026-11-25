@@ -76,3 +76,9 @@ def test_reported_hold_out_metrics_match_predictions():
     from src.evaluation import metrics_from_proba
     for key in ("knn", "svm", "mlp", "xgb"):
         assert metrics_from_proba(preds["y_true"], preds[key])["F1"] == pytest.approx(reported[key]["F1"], abs=1e-9)
+
+
+def test_installed_versions_match_the_saved_models():
+    """The pickled models must be used with the library versions recorded when they were saved."""
+    from src.store import environment_mismatches
+    assert environment_mismatches(C.ARTIFACTS_FULL) == []

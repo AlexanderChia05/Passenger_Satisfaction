@@ -51,3 +51,7 @@ with st.sidebar:
                 unsafe_allow_html=True)
     if not full:
         st.caption("Run `python train_full.py` for the full system.")
+    # Pickled models are only guaranteed to behave identically with the library versions that saved them.
+    from src.store import environment_mismatches
+    for msg in environment_mismatches(ui.ART):
+        st.warning(f"Version mismatch: {msg}. Run `pip install -r requirements.txt`.")

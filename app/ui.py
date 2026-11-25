@@ -199,6 +199,22 @@ def load_test_predictions() -> pd.DataFrame:
 
 
 @st.cache_data
+def load_oof() -> pd.DataFrame | None:
+    """Out-of-fold P(satisfied) of every member and the rule baseline on the 103,904 training passengers
+    (5-fold CV), plus y_true. Used to CHOOSE settings such as decision thresholds, so the hold-out set
+    is only used to report the result. None when the full experiments were not run."""
+    try:
+        oof = pd.read_parquet(EXP_DIR / "oof_final.parquet")
+        base = pd.read_parquet(EXP_DIR / "oof_baselines.parquet")
+    except Exception:  # prototype artifacts have no OOF predictions
+        return None
+    rule = [c for c in base.columns if c.startswith("Rule")]
+    if rule:
+        oof["rule"] = base[rule[0]].to_numpy()
+    return oof
+
+
+@st.cache_data
 def load_metrics() -> dict:
     """Hold-out metrics and run metadata written by the training pipeline."""
     try:

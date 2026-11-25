@@ -32,7 +32,7 @@ with tab_over:
 
     best = max(ui.MEMBER_MODELS, key=lambda k: m[k]["F1"])
     k = st.columns(4)
-    k[0].markdown(ui.kpi("Best model (F1)", ui.mname(best), ui.ACCENT), unsafe_allow_html=True)
+    k[0].markdown(ui.kpi("Best member model (F1)", ui.mname(best), ui.ACCENT), unsafe_allow_html=True)
     k[1].markdown(ui.kpi("Best accuracy", f"{m[best]['Accuracy']*100:.2f}%"), unsafe_allow_html=True)
     k[2].markdown(ui.kpi("Accuracy gain vs dummy", "+{d:.1f} pts".format(d=(m[best]['Accuracy'] - m['dummy']['Accuracy']) * 100)),
                   unsafe_allow_html=True)

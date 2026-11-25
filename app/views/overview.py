@@ -21,7 +21,7 @@ k = st.columns(4)
 k[0].markdown(ui.kpi("Passengers", f"{m['trained_on_rows'] + m['test_rows']:,}", sub=
                      f"{m['trained_on_rows']:,} train · {m['test_rows']:,} hold-out"), unsafe_allow_html=True)
 k[1].markdown(ui.kpi("Algorithm families", "4", sub="each with its own ensemble, plus 2 baselines"), unsafe_allow_html=True)
-k[2].markdown(ui.kpi("Best hold-out F1", f"{models[best]['F1']:.4f}", ui.ACCENT, ui.mname(best)), unsafe_allow_html=True)
+k[2].markdown(ui.kpi("Best member hold-out F1", f"{models[best]['F1']:.4f}", ui.ACCENT, ui.mname(best)), unsafe_allow_html=True)
 k[3].markdown(ui.kpi("Gain over the business rule", f"+{(models[best]['F1'] - models['rule']['F1']) * 100:.1f} pts F1",
                      f"rule baseline F1 {models['rule']['F1']:.3f}"), unsafe_allow_html=True)
 
@@ -71,6 +71,31 @@ st.markdown(ui.html_table(team.drop(columns=["_b", "_e"]), num=["Base F1", "Tune
 st.write("")
 st.caption("Hold-out F1 on 25,976 unseen passengers. Every member had the same tuning budget (60 Optuna trials on "
            "the same 30k-row subsample) and the same 5-fold CV, so the comparison is fair.")
+
+
+@st.cache_data
+def _mlp_vs_xgb() -> tuple[float, float | None]:
+    """McNemar p-value on the hold-out set and the 5x2cv t-test p-value for MLP vs XGBoost."""
+    from src.evaluation import mcnemar
+    preds = ui.load_test_predictions()
+    p_mc = mcnemar(preds["y_true"], preds["mlp"], preds["xgb"])["p_value"]
+    try:
+        t52 = pd.read_csv(ui.EXP_DIR / "stat_5x2cv.csv")
+        row = t52[(t52["A"] == "mlp") & (t52["B"] == "xgb")]
+        p_52 = float(row["p_value"].iloc[0]) if len(row) else None
+    except Exception:  # prototype artifacts have no statistical tests
+        p_52 = None
+    return p_mc, p_52
+
+
+st.markdown("#### Why XGBoost gives the single-passenger verdict")
+p_mc, p_52 = _mlp_vs_xgb()
+st.markdown(
+    f"XGBoost is not the top scorer: the MLP ensemble's F1 is {models['mlp']['F1']:.4f} vs XGBoost's "
+    f"{models['xgb']['F1']:.4f}, a difference that is not statistically significant (McNemar p = {p_mc:.2f}"
+    + (f"; 5x2cv t-test p = {p_52:.2f}" if p_52 is not None else "") + "). XGBoost was chosen for the single-passenger "
+    "pages because it is about 18x faster to train, gives exact per-passenger explanations (TreeSHAP), and has a "
+    "monotone variant for trustworthy what-if advice. Every page still shows the other three members' predictions.")
 
 st.markdown("#### Suggested demo route")
 st.markdown(
